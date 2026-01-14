@@ -114,6 +114,37 @@ Proporcionar una plataforma centralizada para el registro, seguimiento y validac
 
 ## Instalación
 
+### Método 1: Instalación Automática (Recomendado)
+
+La forma más fácil de instalar y configurar la aplicación es usando el script de instalación automático:
+
+1. Clonar el repositorio:
+```bash
+git clone https://github.com/F040204/programa-1.git
+cd programa-1
+```
+
+2. Crear entorno virtual (opcional pero recomendado):
+```bash
+python -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
+```
+
+3. Ejecutar el script de instalación:
+```bash
+python setup.py
+```
+
+El script automáticamente:
+- ✓ Verifica la versión de Python
+- ✓ Instala todas las dependencias desde requirements.txt
+- ✓ Crea los directorios necesarios
+- ✓ Crea el archivo .env desde .env.example
+- ✓ Inicializa la base de datos
+- ✓ Crea el usuario administrador por defecto
+
+### Método 2: Instalación Manual
+
 1. Clonar el repositorio:
 ```bash
 git clone https://github.com/F040204/programa-1.git
