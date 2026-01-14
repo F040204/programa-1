@@ -105,7 +105,7 @@ def validate_operation(operation_id):
                     depth_to=data.get('depth_to', 0.0),
                     scan_quality=data.get('quality', 'unknown'),
                     file_size=data.get('file_size', 0),
-                    metadata=str(data.get('metadata', {}))
+                    scan_metadata=str(data.get('metadata', {}))
                 )
                 db.session.add(scan)
         

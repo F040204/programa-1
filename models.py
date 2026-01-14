@@ -59,7 +59,7 @@ class ScanData(db.Model):
     depth_to = db.Column(db.Float)
     scan_quality = db.Column(db.String(50))
     file_size = db.Column(db.Integer)
-    metadata = db.Column(db.Text)
+    scan_metadata = db.Column(db.Text)  # Renamed from metadata to avoid conflict
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
@@ -76,6 +76,6 @@ class ScanData(db.Model):
             'depth_to': self.depth_to,
             'scan_quality': self.scan_quality,
             'file_size': self.file_size,
-            'metadata': self.metadata,
+            'metadata': self.scan_metadata,  # Keep the same key in JSON output
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
