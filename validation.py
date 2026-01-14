@@ -4,6 +4,143 @@ class DataValidator:
     def __init__(self):
         self.tolerance = 0.1  # Tolerancia para comparación de profundidades (metros)
     
+    def verify_data_exists(self, data, data_type="data"):
+        """
+        Verificar si los datos existen y son válidos
+        
+        Args:
+            data: Datos a verificar (puede ser lista, dict, objeto, etc.)
+            data_type: Tipo de datos para mensajes de error
+            
+        Returns:
+            Diccionario con resultado de verificación:
+            {
+                'exists': bool,
+                'valid': bool,
+                'message': str,
+                'count': int (si es lista)
+            }
+        """
+        result = {
+            'exists': False,
+            'valid': False,
+            'message': '',
+            'count': 0
+        }
+        
+        # Verificar si es None
+        if data is None:
+            result['message'] = f'{data_type} no existe (None)'
+            return result
+        
+        # Verificar si es una lista
+        if isinstance(data, list):
+            result['exists'] = True
+            result['count'] = len(data)
+            if len(data) == 0:
+                result['valid'] = False
+                result['message'] = f'{data_type} existe pero está vacío'
+            else:
+                result['valid'] = True
+                result['message'] = f'{data_type} existe y contiene {len(data)} elementos'
+            return result
+        
+        # Verificar si es un diccionario
+        if isinstance(data, dict):
+            result['exists'] = True
+            result['count'] = len(data)
+            if len(data) == 0:
+                result['valid'] = False
+                result['message'] = f'{data_type} existe pero está vacío'
+            else:
+                result['valid'] = True
+                result['message'] = f'{data_type} existe y contiene {len(data)} campos'
+            return result
+        
+        # Para otros tipos de objetos
+        result['exists'] = True
+        result['valid'] = True
+        result['message'] = f'{data_type} existe'
+        
+        return result
+    
+    def validate_batch(self, batch, smb_data):
+        """
+        Validar un batch contra datos del servidor SMB
+        
+        Args:
+            batch: Objeto Batch de la base de datos
+            smb_data: Datos recuperados del servidor SMB
+            
+        Returns:
+            Diccionario con resultado de validación
+        """
+        result = {
+            'has_discrepancies': False,
+            'discrepancies': [],
+            'message': '',
+            'batch_id': batch.id if hasattr(batch, 'id') else None,
+            'batch_number': batch.batch_number if hasattr(batch, 'batch_number') else None
+        }
+        
+        # Verificar si hay datos SMB usando verify_data_exists
+        smb_check = self.verify_data_exists(smb_data, 'Datos SMB')
+        if not smb_check['valid']:
+            result['has_discrepancies'] = True
+            result['discrepancies'].append(smb_check['message'])
+            result['message'] = 'No se encontraron datos correspondientes en el servidor SMB'
+            return result
+        
+        # Si smb_data es un diccionario, convertirlo a lista
+        if isinstance(smb_data, dict):
+            smb_data = [smb_data]
+        
+        # Validar rangos de profundidad
+        depth_matches = self._validate_depth_ranges_batch(batch, smb_data)
+        if not depth_matches:
+            result['has_discrepancies'] = True
+            result['discrepancies'].append('Los rangos de profundidad no coinciden')
+        
+        # Construir mensaje
+        if result['has_discrepancies']:
+            result['message'] = 'Discrepancias encontradas: ' + '; '.join(result['discrepancies'])
+        else:
+            result['message'] = 'Validación exitosa: Los datos son consistentes'
+        
+        return result
+    
+    def _validate_depth_ranges_batch(self, batch, smb_data):
+        """
+        Validar que los rangos de profundidad coincidan para batches
+        
+        Args:
+            batch: Objeto Batch
+            smb_data: Lista de datos SMB
+            
+        Returns:
+            True si los rangos coinciden dentro de la tolerancia
+        """
+        if not smb_data:
+            return False
+        
+        # Para un batch, buscar el dato SMB correspondiente
+        for smb in smb_data:
+            smb_from = smb.get('depth_from', smb.get('from_depth', 0))
+            smb_to = smb.get('depth_to', smb.get('to_depth', 0))
+            
+            # Si no se pudieron extraer profundidades, continuar
+            if smb_from == 0 and smb_to == 0:
+                continue
+            
+            # Comparar con tolerancia
+            depth_from_match = abs(batch.from_depth - smb_from) <= self.tolerance
+            depth_to_match = abs(batch.to_depth - smb_to) <= self.tolerance
+            
+            if depth_from_match and depth_to_match:
+                return True
+        
+        return False
+    
     def validate_operation(self, operation, smb_data):
         """
         Validar una operación contra datos del servidor SMB

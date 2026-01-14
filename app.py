@@ -366,35 +366,42 @@ def status_checker():
         smb_cache.set('smb_status', smb_connection_status)
         smb_cache.set('smb_batches_data', smb_batches_data)
     
-    # Compare data and find discrepancies
+    # Initialize data validator
+    validator = DataValidator()
+    
+    # Verify SMB data exists
+    smb_verification = validator.verify_data_exists(smb_batches_data, 'Datos del servidor SMB')
+    
+    # Compare data and find discrepancies using DataValidator
     discrepancies = []
     for batch in batches.items:
         # Find matching SMB data
         matching_smb = None
         for smb_data in smb_batches_data:
-            if (smb_data.get('core_id') == batch.hole_id and 
-                smb_data.get('machine_id') == batch.machine):
+            # Support both old and new field names
+            smb_hole_id = smb_data.get('hole_id') or smb_data.get('core_id')
+            smb_machine = smb_data.get('machine') or smb_data.get('machine_id')
+            
+            if (smb_hole_id == batch.hole_id and smb_machine == batch.machine):
                 matching_smb = smb_data
                 break
         
         if matching_smb:
-            # Check for discrepancies
-            has_discrepancy = False
-            if abs(matching_smb.get('depth_from', 0) - batch.from_depth) > 0.1:
-                has_discrepancy = True
-            if abs(matching_smb.get('depth_to', 0) - batch.to_depth) > 0.1:
-                has_discrepancy = True
+            # Use DataValidator to check for discrepancies
+            validation_result = validator.validate_batch(batch, matching_smb)
             
-            if has_discrepancy:
+            if validation_result['has_discrepancies']:
                 discrepancies.append({
                     'batch': batch,
-                    'smb_data': matching_smb
+                    'smb_data': matching_smb,
+                    'validation_result': validation_result
                 })
     
     return render_template('status_checker.html', 
                          batches=batches,
                          smb_batches_data=smb_batches_data,
                          smb_connection_status=smb_connection_status,
+                         smb_verification=smb_verification,
                          discrepancies=discrepancies)
 
 
@@ -596,6 +603,146 @@ def api_batch_detail(batch_id):
     """API para obtener detalles de un batch"""
     batch = Batch.query.get_or_404(batch_id)
     return jsonify(batch.to_dict())
+
+
+@app.route('/api/batch/<int:batch_id>/verify', methods=['GET'])
+@login_required
+def api_verify_batch(batch_id):
+    """
+    API para verificar si existen datos de un batch en el servidor SMB
+    
+    Returns:
+        JSON con información de verificación:
+        {
+            'batch_exists': bool,
+            'smb_data_exists': bool,
+            'validation_result': dict,
+            'message': str
+        }
+    """
+    batch = Batch.query.get_or_404(batch_id)
+    validator = DataValidator()
+    
+    # Verify batch exists in database
+    batch_verification = validator.verify_data_exists(batch, 'Batch en base de datos')
+    
+    # Try to get SMB data for this batch
+    try:
+        smb_retriever = SMBDataRetriever(app.config)
+        smb_data = smb_retriever.get_operation_data(batch.hole_id, batch.to_depth)
+        
+        # Verify SMB data exists
+        smb_verification = validator.verify_data_exists(smb_data, 'Datos en servidor SMB')
+        
+        # Validate batch against SMB data if both exist
+        validation_result = None
+        if batch_verification['valid'] and smb_verification['valid']:
+            validation_result = validator.validate_batch(batch, smb_data)
+        
+        return jsonify({
+            'batch_exists': batch_verification['valid'],
+            'batch_verification': batch_verification,
+            'smb_data_exists': smb_verification['valid'],
+            'smb_verification': smb_verification,
+            'validation_result': validation_result,
+            'message': 'Verificación completada'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'batch_exists': batch_verification['valid'],
+            'batch_verification': batch_verification,
+            'smb_data_exists': False,
+            'smb_verification': {
+                'exists': False,
+                'valid': False,
+                'message': f'Error al verificar datos SMB: {str(e)}'
+            },
+            'validation_result': None,
+            'message': 'Error al verificar datos en servidor SMB'
+        }), 500
+
+
+@app.route('/api/verify-all-batches', methods=['GET'])
+@login_required
+def api_verify_all_batches():
+    """
+    API para verificar todos los batches contra el servidor SMB
+    
+    Returns:
+        JSON con resumen de verificación de todos los batches
+    """
+    validator = DataValidator()
+    
+    # Get all batches
+    batches = Batch.query.all()
+    batch_verification = validator.verify_data_exists(batches, 'Batches en base de datos')
+    
+    if not batch_verification['valid']:
+        return jsonify({
+            'success': False,
+            'message': batch_verification['message'],
+            'results': []
+        })
+    
+    # Get SMB data
+    try:
+        smb_retriever = SMBDataRetriever(app.config)
+        smb_batches_data = smb_retriever.scan_for_new_operations()
+        smb_verification = validator.verify_data_exists(smb_batches_data, 'Datos del servidor SMB')
+        
+        results = []
+        for batch in batches:
+            # Find matching SMB data
+            matching_smb = None
+            for smb_data in smb_batches_data:
+                smb_hole_id = smb_data.get('hole_id') or smb_data.get('core_id')
+                smb_machine = smb_data.get('machine') or smb_data.get('machine_id')
+                
+                if (smb_hole_id == batch.hole_id and smb_machine == batch.machine):
+                    matching_smb = smb_data
+                    break
+            
+            if matching_smb:
+                validation_result = validator.validate_batch(batch, matching_smb)
+                results.append({
+                    'batch_id': batch.id,
+                    'batch_number': batch.batch_number,
+                    'hole_id': batch.hole_id,
+                    'has_smb_data': True,
+                    'has_discrepancies': validation_result['has_discrepancies'],
+                    'validation_result': validation_result
+                })
+            else:
+                results.append({
+                    'batch_id': batch.id,
+                    'batch_number': batch.batch_number,
+                    'hole_id': batch.hole_id,
+                    'has_smb_data': False,
+                    'has_discrepancies': True,
+                    'validation_result': {
+                        'message': 'No se encontraron datos en el servidor SMB'
+                    }
+                })
+        
+        return jsonify({
+            'success': True,
+            'message': 'Verificación completada',
+            'batch_verification': batch_verification,
+            'smb_verification': smb_verification,
+            'total_batches': len(batches),
+            'batches_with_smb_data': sum(1 for r in results if r['has_smb_data']),
+            'batches_with_discrepancies': sum(1 for r in results if r['has_discrepancies']),
+            'results': results
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al verificar datos: {str(e)}',
+            'batch_verification': batch_verification,
+            'results': []
+        }), 500
 
 
 # ============================================================================

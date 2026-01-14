@@ -11,8 +11,17 @@
         <span id="smb-indicator" class="badge">Verificando...</span>
         <span id="smb-details"></span>
     </div>
+    {% if smb_verification %}
+    <div style="margin-top: 10px;">
+        <strong>Verificación de Datos:</strong>
+        <span class="badge badge-{% if smb_verification.valid %}success{% else %}warning{% endif %}">
+            {{ smb_verification.message }}
+        </span>
+    </div>
+    {% endif %}
     <div style="float: right;">
         <button onclick="refreshSMBStatus()" class="btn btn-sm btn-primary">Actualizar Estado</button>
+        <button onclick="verifyAllBatches()" class="btn btn-sm btn-info">Verificar Todos</button>
     </div>
 </div>
 
@@ -106,7 +115,18 @@
         {% for disc in discrepancies %}
         <li>
             <strong>Batch #{{ disc.batch.batch_number }}</strong> ({{ disc.batch.hole_id }}):
-            Los datos del operador no coinciden con los datos del servidor SMB.
+            {% if disc.validation_result %}
+                {{ disc.validation_result.message }}
+                {% if disc.validation_result.discrepancies %}
+                <ul>
+                    {% for discrepancy in disc.validation_result.discrepancies %}
+                    <li>{{ discrepancy }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            {% else %}
+                Los datos del operador no coinciden con los datos del servidor SMB.
+            {% endif %}
         </li>
         {% endfor %}
     </ul>
@@ -161,6 +181,36 @@ function refreshSMBStatus() {
         })
         .catch(error => {
             console.error('Error fetching SMB status:', error);
+        });
+}
+
+// Verify all batches against SMB data
+function verifyAllBatches() {
+    const button = event.target;
+    button.disabled = true;
+    button.textContent = 'Verificando...';
+    
+    fetch('{{ url_for("api_verify_all_batches") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Verificación completada:\n\n` +
+                      `Total de batches: ${data.total_batches}\n` +
+                      `Con datos en SMB: ${data.batches_with_smb_data}\n` +
+                      `Con discrepancias: ${data.batches_with_discrepancies}\n\n` +
+                      `Recargar la página para ver detalles.`);
+                location.reload();
+            } else {
+                alert(`Error en la verificación: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error verifying batches:', error);
+            alert('Error al verificar batches. Ver consola para detalles.');
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.textContent = 'Verificar Todos';
         });
 }
 
