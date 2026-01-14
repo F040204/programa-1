@@ -175,15 +175,17 @@ def setup_environment():
         
         # Create a minimal .env file
         minimal_env = """# Configuración de la aplicación
-SECRET_KEY=dev-secret-key-change-in-production
+# IMPORTANTE: Cambia estos valores antes de usar en producción
+SECRET_KEY=CHANGE-THIS-SECRET-KEY-TO-A-RANDOM-STRING-BEFORE-PRODUCTION
 DATABASE_URL=sqlite:///operations.db
 
 # Configuración del servidor SMB (opcional)
-SMB_SERVER_NAME=servidor-smb
+# Configura estos valores si usas integración SMB
+SMB_SERVER_NAME=your-smb-server-name
 SMB_SERVER_IP=192.168.1.100
-SMB_SHARE_NAME=orexplore_data
-SMB_USERNAME=usuario
-SMB_PASSWORD=contraseña
+SMB_SHARE_NAME=your-share-name
+SMB_USERNAME=your-smb-username
+SMB_PASSWORD=your-smb-password
 SMB_DOMAIN=WORKGROUP
 
 # URLs externas configurables
@@ -215,6 +217,9 @@ MINERALS_URL=http://172.16.11.155:8005/get_html
 def initialize_database():
     """Initialize the database and create default admin user"""
     print_header("Initializing Database")
+    
+    print_warning("Security Notice: Default admin user will be created with weak credentials")
+    print_warning("These credentials are ONLY for initial setup and MUST be changed immediately")
     
     try:
         # Import after dependencies are installed
@@ -255,8 +260,18 @@ with app.app_context():
         
         if 'CREATED_ADMIN' in output:
             print_success("Default admin user created")
-            print_warning("Default credentials - Username: admin, Password: admin")
-            print_warning("IMPORTANT: Change the admin password after first login!")
+            print("")
+            print("⚠" * 35)
+            print("⚠  SECURITY WARNING - WEAK CREDENTIALS")
+            print("⚠" * 35)
+            print("⚠  Username: admin")
+            print("⚠  Password: admin")
+            print("⚠" * 35)
+            print("⚠  These are WEAK DEFAULT CREDENTIALS!")
+            print("⚠  You MUST change the admin password immediately")
+            print("⚠  after your first login to secure your application.")
+            print("⚠" * 35)
+            print("")
         elif 'ADMIN_EXISTS' in output:
             print_info("Default admin user already exists")
         
@@ -308,7 +323,7 @@ try:
     import flask
     import flask_sqlalchemy
     import flask_login
-    import smb  # pysmb installs as 'smb'
+    from smb.SMBConnection import SMBConnection  # pysmb installs as 'smb' package
     import dotenv
     print('SUCCESS')
 except ImportError as e:
@@ -336,10 +351,11 @@ def print_next_steps():
     
     print("Next steps to run the application:\n")
     
-    print("1. Review and configure your .env file:")
-    print("   - Set a strong SECRET_KEY")
+    print("1. ⚠ SECURITY: Review and configure your .env file:")
+    print("   - Set a STRONG SECRET_KEY (use a random string generator)")
     print("   - Configure SMB server settings if needed")
-    print("   - Update external URLs as needed\n")
+    print("   - Update external URLs as needed")
+    print("   - Never commit .env to version control!\n")
     
     print("2. Start the application:")
     print("   python app.py\n")
@@ -347,15 +363,22 @@ def print_next_steps():
     print("3. Access the application:")
     print("   Open your browser and go to: http://localhost:5000\n")
     
-    print("4. Login with default credentials:")
-    print("   Username: admin")
-    print("   Password: admin")
-    print("   ⚠ IMPORTANT: Change this password immediately!\n")
+    print("4. ⚠️  SECURITY: Change default credentials immediately!")
+    print("   Login with: Username: admin / Password: admin")
+    print("   Then immediately go to user settings and change the password")
+    print("   to a strong, unique password.\n")
     
     print("5. For development mode:")
     print("   export FLASK_ENV=development  # Linux/Mac")
     print("   set FLASK_ENV=development     # Windows")
     print("   python app.py\n")
+    
+    print("6. For production deployment:")
+    print("   - Use a production WSGI server (e.g., gunicorn, waitress)")
+    print("   - Set a strong SECRET_KEY in .env")
+    print("   - Change all default passwords")
+    print("   - Review and configure SMB settings")
+    print("   - Use HTTPS with a proper SSL certificate\n")
     
     print("For more information, see README.md")
     print("=" * 70 + "\n")
