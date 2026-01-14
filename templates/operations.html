@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Operaciones - Portal de Operaciones{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Lista de Operaciones</h2>
+</div>
+
+<div class="filters">
+    <form method="get" action="{{ url_for('operations_list') }}" class="filter-form">
+        <label for="status">Filtrar por estado:</label>
+        <select name="status" id="status" onchange="this.form.submit()">
+            <option value="">Todos</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pendientes</option>
+            <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>Validadas</option>
+            <option value="discrepancy" {% if status_filter == 'discrepancy' %}selected{% endif %}>Con Discrepancias</option>
+        </select>
+    </form>
+</div>
+
+{% if operations.items %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>ID Núcleo</th>
+                <th>Máquina</th>
+                <th>Operador</th>
+                <th>Fecha de Escaneo</th>
+                <th>Profundidad</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for operation in operations.items %}
+            <tr>
+                <td>{{ operation.id }}</td>
+                <td>{{ operation.core_id }}</td>
+                <td>{{ operation.machine_id }}</td>
+                <td>{{ operation.operator_name }}</td>
+                <td>{{ operation.scan_date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ operation.depth_from }}m - {{ operation.depth_to }}m</td>
+                <td><span class="badge badge-{{ operation.status }}">{{ operation.status }}</span></td>
+                <td>
+                    <a href="{{ url_for('operation_detail', operation_id=operation.id) }}" class="btn btn-sm btn-primary">Ver</a>
+                    <a href="{{ url_for('edit_operation', operation_id=operation.id) }}" class="btn btn-sm btn-secondary">Editar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Paginación -->
+    <div class="pagination">
+        {% if operations.has_prev %}
+            <a href="{{ url_for('operations_list', page=operations.prev_num, status=status_filter) }}" class="btn btn-sm btn-secondary">Anterior</a>
+        {% endif %}
+        
+        <span class="page-info">Página {{ operations.page }} de {{ operations.pages }}</span>
+        
+        {% if operations.has_next %}
+            <a href="{{ url_for('operations_list', page=operations.next_num, status=status_filter) }}" class="btn btn-sm btn-secondary">Siguiente</a>
+        {% endif %}
+    </div>
+{% else %}
+    <p class="text-muted">No se encontraron operaciones.</p>
+{% endif %}
+{% endblock %}

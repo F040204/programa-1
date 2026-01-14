@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Sincronizar SMB - Portal de Operaciones{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Sincronizar con Servidor SMB</h2>
+</div>
+
+<div class="info-box">
+    <h3>Acerca de la Sincronización</h3>
+    <p>Esta función escanea el servidor SMB configurado en busca de nuevas operaciones de escaneo de núcleos de perforación que no hayan sido registradas en el sistema.</p>
+    <ul>
+        <li>Servidor: {{ config.SMB_SERVER_NAME }} ({{ config.SMB_SERVER_IP }})</li>
+        <li>Compartido: {{ config.SMB_SHARE_NAME }}</li>
+        <li>Dominio: {{ config.SMB_DOMAIN }}</li>
+    </ul>
+    <p><strong>Nota:</strong> La sincronización puede tardar varios minutos dependiendo del número de archivos en el servidor.</p>
+</div>
+
+<form method="post" action="{{ url_for('sync_smb') }}" onsubmit="return confirm('¿Desea iniciar la sincronización con el servidor SMB?');">
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Iniciar Sincronización</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

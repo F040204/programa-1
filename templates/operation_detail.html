@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Operación - Portal de Operaciones{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Detalle de Operación #{{ operation.id }}</h2>
+</div>
+
+<div class="operation-detail">
+    <div class="detail-section">
+        <h3>Información General</h3>
+        <table class="detail-table">
+            <tr>
+                <th>ID del Núcleo:</th>
+                <td>{{ operation.core_id }}</td>
+            </tr>
+            <tr>
+                <th>Máquina:</th>
+                <td>{{ operation.machine_id }}</td>
+            </tr>
+            <tr>
+                <th>Operador:</th>
+                <td>{{ operation.operator_name }}</td>
+            </tr>
+            <tr>
+                <th>Fecha de Escaneo:</th>
+                <td>{{ operation.scan_date.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            <tr>
+                <th>Profundidad:</th>
+                <td>{{ operation.depth_from }}m - {{ operation.depth_to }}m</td>
+            </tr>
+            <tr>
+                <th>Estado:</th>
+                <td><span class="badge badge-{{ operation.status }}">{{ operation.status }}</span></td>
+            </tr>
+            <tr>
+                <th>Fecha de Creación:</th>
+                <td>{{ operation.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% if operation.validated_at %}
+            <tr>
+                <th>Fecha de Validación:</th>
+                <td>{{ operation.validated_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    {% if operation.notes %}
+    <div class="detail-section">
+        <h3>Notas</h3>
+        <p>{{ operation.notes }}</p>
+    </div>
+    {% endif %}
+
+    {% if operation.validation_notes %}
+    <div class="detail-section">
+        <h3>Notas de Validación</h3>
+        <p class="validation-notes">{{ operation.validation_notes }}</p>
+    </div>
+    {% endif %}
+
+    {% if scan_data %}
+    <div class="detail-section">
+        <h3>Datos de Escaneo ({{ scan_data|length }} archivos)</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fuente</th>
+                    <th>Ruta del Archivo</th>
+                    <th>Profundidad</th>
+                    <th>Calidad</th>
+                    <th>Tamaño</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in scan_data %}
+                <tr>
+                    <td><span class="badge badge-{{ data.source }}">{{ data.source }}</span></td>
+                    <td>{{ data.file_path }}</td>
+                    <td>{{ data.depth_from }}m - {{ data.depth_to }}m</td>
+                    <td>{{ data.scan_quality }}</td>
+                    <td>{{ data.file_size|filesizeformat if data.file_size else 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="detail-actions">
+        <form method="post" action="{{ url_for('validate_operation', operation_id=operation.id) }}" style="display: inline;">
+            <button type="submit" class="btn btn-primary">Validar con SMB</button>
+        </form>
+        <a href="{{ url_for('edit_operation', operation_id=operation.id) }}" class="btn btn-secondary">Editar</a>
+        <form method="post" action="{{ url_for('delete_operation', operation_id=operation.id) }}" style="display: inline;" onsubmit="return confirm('¿Está seguro de eliminar esta operación?');">
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+        </form>
+        <a href="{{ url_for('operations_list') }}" class="btn btn-secondary">Volver a Lista</a>
+    </div>
+</div>
+{% endblock %}
