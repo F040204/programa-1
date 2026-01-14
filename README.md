@@ -2,6 +2,51 @@
 
 Sistema web de gestión y monitoreo de operaciones de escaneo de núcleos de perforación (drill cores) para máquinas Orexplore.
 
+## 🆕 Características Principales (v2.0)
+
+### 🔐 Sistema de Autenticación Completo
+- Login/Logout seguro con contraseñas hasheadas
+- Sesiones persistentes con tiempo de expiración (24 horas)
+- Rate limiting (máximo 5 intentos fallidos, bloqueo de 5 minutos)
+- Creación de usuarios por administradores
+- Usuario por defecto: `admin` / `admin` (debe cambiarse en producción)
+
+### 📊 Gestión de Batches
+- Registro de nuevos batches con validación en tiempo real
+- Edición de batches existentes
+- Eliminación con renumeración automática
+- Paginación (30 items por página)
+- Campos: Hole ID, From (m), To (m), Machine, Comentarios
+
+### 🔍 Status Checker
+- Comparación automática entre datos ingresados y datos del servidor SMB
+- Tabla con dos secciones: "Ingresado en OP" y "Ingresado en Máquina"
+- Resaltado visual de discrepancias en rojo
+- Indicador de conexión SMB con actualización cada 30 segundos
+
+### 📈 Visualización de Estadísticas
+- Contador total de metros escaneados
+- Gráfico de progreso diario (por hora)
+- Gráfico de progreso mensual (últimos 30 días)
+- Actualización automática
+
+### 🔗 Integración con Sistemas Externos
+- Página de telemetría (URL configurable)
+- Enlace a minerales: http://172.16.11.155:8005/get_html
+
+### 🏥 Health Check
+- Endpoint `/health` que proporciona:
+  - Estado general del sistema (healthy/degraded)
+  - Estado de la base de datos (cantidad de batches)
+  - Estado de conexión SMB
+  - Timestamp de verificación
+  - Formato JSON para integración con herramientas de monitoreo
+
+### 🗄️ Sistema de Caché
+- Caché automático de datos (TTL: 30 segundos)
+- Thread-safe con locks
+- Endpoint de invalidación: `POST /api/cache/invalidate`
+
 ## Descripción
 
 Portal de Operaciones es una aplicación web desarrollada en Python con Flask que permite:
@@ -116,24 +161,67 @@ python app.py
 
 La aplicación estará disponible en: `http://localhost:5000`
 
-### Crear una nueva operación
+### Primer acceso
 
-1. Ir a "Nueva Operación"
-2. Completar el formulario con los datos del escaneo
-3. Guardar la operación
+1. Navegar a `http://localhost:5000`
+2. Iniciar sesión con las credenciales por defecto:
+   - **Usuario**: `admin`
+   - **Contraseña**: `admin`
+3. **IMPORTANTE**: Cambiar la contraseña del administrador después del primer acceso
 
-### Validar una operación
+### Crear un nuevo batch
 
-1. Abrir el detalle de una operación
-2. Hacer clic en "Validar con SMB"
-3. El sistema comparará los datos con el servidor SMB
-4. Ver el resultado de la validación
+1. Ir a "Nuevo Batch" en el menú
+2. Completar el formulario:
+   - **Hole ID**: Identificador del hoyo (ej: DDH-001)
+   - **From (m)**: Profundidad inicial en metros
+   - **To (m)**: Profundidad final en metros
+   - **Machine**: Nombre de la máquina (ej: OREX-01)
+   - **Comentarios**: Notas opcionales
+3. Hacer clic en "Crear Batch"
 
-### Sincronizar con servidor SMB
+### Verificar el estado con Status Checker
 
-1. Ir a "Sincronizar SMB"
-2. Iniciar sincronización
-3. El sistema detectará automáticamente nuevas operaciones
+1. Ir a "Status Checker" en el menú
+2. Ver la comparación entre datos ingresados y datos del servidor SMB
+3. Las discrepancias se resaltan en rojo
+4. El indicador de conexión SMB se actualiza cada 30 segundos
+
+### Ver estadísticas
+
+1. Ir a "Estadísticas" en el menú
+2. Ver el total de metros escaneados
+3. Analizar gráficos de progreso diario y mensual
+
+### Crear nuevos usuarios (solo administradores)
+
+1. Ir a "Usuarios" en el menú
+2. Hacer clic en "Crear Nuevo Usuario"
+3. Ingresar nombre de usuario y contraseña
+4. Marcar "Usuario Administrador" si se requieren permisos de administración
+
+### Monitorear la salud del sistema
+
+Acceder al endpoint de health check:
+```bash
+curl http://localhost:5000/health
+```
+
+Respuesta ejemplo:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-01-14T19:11:09Z",
+  "database": {
+    "status": "healthy",
+    "batch_count": 42
+  },
+  "smb": {
+    "status": "healthy",
+    "batches_found": 15
+  }
+}
+```
 
 ## Estructura del Proyecto
 
