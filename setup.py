@@ -323,7 +323,7 @@ try:
     import flask
     import flask_sqlalchemy
     import flask_login
-    from smb.SMBConnection import SMBConnection  # pysmb installs as 'smb' package
+    from smb.SMBConnection import SMBConnection  # pysmb package provides smb module
     import dotenv
     print('SUCCESS')
 except ImportError as e:
