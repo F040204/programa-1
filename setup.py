@@ -218,35 +218,50 @@ def initialize_database():
     
     try:
         # Import after dependencies are installed
-        from app import app, db
-        from models import User
+        # Use a subprocess to run the database initialization in a fresh Python environment
+        init_script = """
+import sys
+sys.path.insert(0, '.')
+from app import app, db
+from models import User
+
+with app.app_context():
+    db.create_all()
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(username='admin', is_admin=True)
+        admin.set_password('admin')
+        db.session.add(admin)
+        db.session.commit()
+        print('CREATED_ADMIN')
+    else:
+        print('ADMIN_EXISTS')
+"""
         
-        with app.app_context():
-            print_info("Creating database tables...")
-            db.create_all()
-            print_success("Database tables created successfully")
-            
-            # Check if admin user exists
-            admin = User.query.filter_by(username='admin').first()
-            
-            if admin:
-                print_info("Default admin user already exists")
-            else:
-                print_info("Creating default admin user...")
-                admin = User(username='admin', is_admin=True)
-                admin.set_password('admin')
-                db.session.add(admin)
-                db.session.commit()
-                print_success("Default admin user created")
-                print_warning("Default credentials - Username: admin, Password: admin")
-                print_warning("IMPORTANT: Change the admin password after first login!")
+        print_info("Creating database tables...")
+        result = subprocess.run(
+            [sys.executable, "-c", init_script],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent
+        )
+        
+        if result.returncode != 0:
+            print_error(f"Failed to initialize database: {result.stderr}")
+            return False
+        
+        output = result.stdout.strip()
+        print_success("Database tables created successfully")
+        
+        if 'CREATED_ADMIN' in output:
+            print_success("Default admin user created")
+            print_warning("Default credentials - Username: admin, Password: admin")
+            print_warning("IMPORTANT: Change the admin password after first login!")
+        elif 'ADMIN_EXISTS' in output:
+            print_info("Default admin user already exists")
         
         return True
         
-    except ImportError as e:
-        print_error(f"Failed to import required modules: {e}")
-        print_info("Make sure all dependencies are installed")
-        return False
     except Exception as e:
         print_error(f"Failed to initialize database: {e}")
         return False
@@ -278,21 +293,38 @@ def verify_installation():
     
     # Check for database
     db_path = base_dir / "operations.db"
+    db_path_instance = base_dir / "instance" / "operations.db"
     if db_path.exists():
         print_success(f"Database created: {db_path.name}")
+    elif db_path_instance.exists():
+        print_success(f"Database created: instance/{db_path_instance.name}")
     else:
         print_warning("Database file not found (will be created on first run)")
     
-    # Try to import main modules
-    try:
-        import flask
-        import flask_sqlalchemy
-        import flask_login
-        import pysmb
-        import dotenv
+    # Try to import main modules using subprocess to ensure fresh environment
+    print_info("Verifying Python packages...")
+    verify_script = """
+try:
+    import flask
+    import flask_sqlalchemy
+    import flask_login
+    import smb  # pysmb installs as 'smb'
+    import dotenv
+    print('SUCCESS')
+except ImportError as e:
+    print(f'IMPORT_ERROR:{e}')
+"""
+    
+    result = subprocess.run(
+        [sys.executable, "-c", verify_script],
+        capture_output=True,
+        text=True
+    )
+    
+    if 'SUCCESS' in result.stdout:
         print_success("All required Python packages are importable")
-    except ImportError as e:
-        print_error(f"Some packages cannot be imported: {e}")
+    else:
+        print_error(f"Some packages cannot be imported: {result.stdout.strip()}")
         all_files_present = False
     
     return all_files_present
