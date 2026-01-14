@@ -23,10 +23,11 @@ class SMBDataRetriever:
                 use_ntlm_v2=True
             )
             
-            # Conectar al servidor
+            # Conectar al servidor con timeout
             connected = self.connection.connect(
                 self.config['SMB_SERVER_IP'],
-                139  # Puerto SMB
+                139,  # Puerto SMB
+                timeout=5  # 5 segundos de timeout
             )
             
             return connected

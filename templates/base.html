@@ -14,10 +14,18 @@
             </div>
             <ul class="navbar-menu">
                 <li><a href="{{ url_for('index') }}">Inicio</a></li>
-                <li><a href="{{ url_for('operations_list') }}">Operaciones</a></li>
-                <li><a href="{{ url_for('new_operation') }}">Nueva Operación</a></li>
-                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('sync_smb') }}">Sincronizar SMB</a></li>
+                <li><a href="{{ url_for('batches_list') }}">Batches</a></li>
+                <li><a href="{{ url_for('new_batch') }}">Nuevo Batch</a></li>
+                <li><a href="{{ url_for('status_checker') }}">Status Checker</a></li>
+                <li><a href="{{ url_for('statistics') }}">Estadísticas</a></li>
+                <li><a href="{{ url_for('telemetry') }}">Telemetría</a></li>
+                <li><a href="{{ url_for('minerals') }}">Minerales</a></li>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_admin %}
+                        <li><a href="{{ url_for('users_list') }}">Usuarios</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('logout') }}">Cerrar Sesión ({{ current_user.username }})</a></li>
+                {% endif %}
             </ul>
         </div>
     </nav>

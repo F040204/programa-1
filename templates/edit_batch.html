@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Batch - Portal de Operaciones{% endblock %}
+
+{% block content %}
+<h2>Editar Batch #{{ batch.batch_number }}</h2>
+
+<form method="POST" id="batchForm">
+    <div class="form-group">
+        <label for="hole_id">Hole ID *</label>
+        <input type="text" id="hole_id" name="hole_id" class="form-control" value="{{ batch.hole_id }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="from_depth">From (profundidad inicial en metros) *</label>
+        <input type="number" id="from_depth" name="from_depth" class="form-control" step="0.01" value="{{ batch.from_depth }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="to_depth">To (profundidad final en metros) *</label>
+        <input type="number" id="to_depth" name="to_depth" class="form-control" step="0.01" value="{{ batch.to_depth }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="machine">Machine *</label>
+        <input type="text" id="machine" name="machine" class="form-control" value="{{ batch.machine }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="comments">Comentarios (opcional)</label>
+        <textarea id="comments" name="comments" class="form-control" rows="3">{{ batch.comments }}</textarea>
+    </div>
+    
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Actualizar Batch</button>
+        <a href="{{ url_for('batch_detail', batch_id=batch.id) }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Real-time validation
+document.getElementById('batchForm').addEventListener('submit', function(e) {
+    const fromDepth = parseFloat(document.getElementById('from_depth').value);
+    const toDepth = parseFloat(document.getElementById('to_depth').value);
+    
+    if (fromDepth >= toDepth) {
+        e.preventDefault();
+        alert('Error: La profundidad inicial debe ser menor que la profundidad final.');
+        return false;
+    }
+    
+    return true;
+});
+</script>
+{% endblock %}

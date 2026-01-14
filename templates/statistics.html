@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Estadísticas - Portal de Operaciones{% endblock %}
+
+{% block content %}
+<h2>📈 Estadísticas y Visualización</h2>
+
+<div class="stats-container">
+    <!-- Total Meters -->
+    <div class="stat-card" style="background: #007bff; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
+        <h3 style="margin: 0;">Total Metros Escaneados</h3>
+        <div style="font-size: 48px; font-weight: bold; margin-top: 10px;">
+            {{ total_meters }} m
+        </div>
+    </div>
+    
+    <!-- Daily Progress Chart -->
+    <div class="chart-card" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h3>Progreso Diario (Por Hora)</h3>
+        <canvas id="dailyChart"></canvas>
+    </div>
+    
+    <!-- Monthly Progress Chart -->
+    <div class="chart-card" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h3>Progreso Mensual (Últimos 30 Días)</h3>
+        <canvas id="monthlyChart"></canvas>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Daily Chart Data
+const dailyData = {{ daily_data | tojson | safe }};
+const dailyLabels = dailyData.map(d => d[0] ? d[0] + ':00' : 'N/A');
+const dailyValues = dailyData.map(d => d[1] || 0);
+
+// Monthly Chart Data
+const monthlyData = {{ monthly_data | tojson | safe }};
+const monthlyLabels = monthlyData.map(d => d[0] || 'N/A');
+const monthlyValues = monthlyData.map(d => d[1] || 0);
+
+// Daily Chart
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+const dailyChart = new Chart(dailyCtx, {
+    type: 'bar',
+    data: {
+        labels: dailyLabels,
+        datasets: [{
+            label: 'Metros Escaneados',
+            data: dailyValues,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Metros'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Hora del Día'
+                }
+            }
+        }
+    }
+});
+
+// Monthly Chart
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+const monthlyChart = new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+        labels: monthlyLabels,
+        datasets: [{
+            label: 'Metros Escaneados',
+            data: monthlyValues,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Metros'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Fecha'
+                }
+            }
+        }
+    }
+});
+
+// Auto-refresh every 60 seconds
+setInterval(() => {
+    location.reload();
+}, 60000);
+</script>
+{% endblock %}
