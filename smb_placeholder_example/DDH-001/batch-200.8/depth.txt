@@ -1,0 +1,9 @@
+from_depth: 100.5
+to_depth: 200.8
+scan_date: 2026-01-14T11:45:00Z
+quality: good
+machine: OREX-01
+operator: operator1
+core_id: DDH-001
+batch_number: 2
+notes: Second batch of DDH-001
