@@ -35,7 +35,13 @@
             </thead>
             <tbody>
                 {% for batch in batches.items %}
-                <tr class="{% if batch in [d.batch for d in discrepancies] %}discrepancy-row{% endif %}">
+                {% set is_discrepancy = namespace(found=false) %}
+                {% for disc in discrepancies %}
+                    {% if disc.batch.id == batch.id %}
+                        {% set is_discrepancy.found = true %}
+                    {% endif %}
+                {% endfor %}
+                <tr class="{% if is_discrepancy.found %}discrepancy-row{% endif %}">
                     <td>{{ batch.batch_number }}</td>
                     <td>{{ batch.hole_id }}</td>
                     <td>{{ batch.from_depth }}</td>

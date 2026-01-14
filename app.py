@@ -442,21 +442,27 @@ def statistics():
     
     # Daily progress (by hour for today)
     today = utcnow().date()
-    daily_data = db.session.query(
+    daily_results = db.session.query(
         func.strftime('%H', Batch.created_at).label('hour'),
         func.sum(Batch.to_depth - Batch.from_depth).label('meters')
     ).filter(
         func.date(Batch.created_at) == today
     ).group_by('hour').all()
     
+    # Convert to list of lists for JSON serialization
+    daily_data = [[row.hour, float(row.meters) if row.meters else 0] for row in daily_results]
+    
     # Monthly progress (last 30 days)
     thirty_days_ago = utcnow() - timedelta(days=30)
-    monthly_data = db.session.query(
+    monthly_results = db.session.query(
         func.date(Batch.created_at).label('date'),
         func.sum(Batch.to_depth - Batch.from_depth).label('meters')
     ).filter(
         Batch.created_at >= thirty_days_ago
     ).group_by('date').all()
+    
+    # Convert to list of lists for JSON serialization
+    monthly_data = [[str(row.date), float(row.meters) if row.meters else 0] for row in monthly_results]
     
     return render_template('statistics.html',
                          total_meters=round(total_meters, 2),

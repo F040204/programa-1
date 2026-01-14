@@ -47,3 +47,8 @@ instance/
 # OS
 .DS_Store
 Thumbs.db
+
+# Backup files
+*.backup
+*_old.py
+*_old.html
