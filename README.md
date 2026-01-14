@@ -13,6 +13,32 @@ Portal de Operaciones es una aplicación web desarrollada en Python con Flask qu
 - **Integración SMB**: Sincronización automática con servidor de archivos compartidos
 - **Dashboard**: Estadísticas y reportes visuales
 
+## Objetivo General
+
+Proporcionar una plataforma centralizada para el registro, seguimiento y validación de operaciones de escaneo de núcleos de perforación, asegurando la integridad y consistencia de los datos entre lo ingresado por operadores y lo generado por las máquinas.
+
+## Objetivos Específicos
+
+### Trazabilidad Completa
+- Registro detallado de cada batch escaneado
+- Identificación de hoyo, máquina y profundidades
+- Timestamp de cada operación
+
+### Control de Calidad
+- Validación automática de datos contra servidor SMB
+- Detección visual de discrepancias (resaltado en rojo)
+- Sistema de estados (correcto/incorrecto)
+
+### Monitoreo en Tiempo Real
+- Visualización de metros escaneados totales
+- Gráficos de progreso diario y mensual
+- Estado de conectividad del servidor
+
+### Gestión Segura
+- Sistema de autenticación de usuarios
+- Control de sesiones
+- Protección contra ataques (rate limiting, validación de entrada)
+
 ## Características
 
 ### Gestión de Operaciones
