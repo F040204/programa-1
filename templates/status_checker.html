@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Status Checker - Portal de Operaciones{% endblock %}
+
+{% block content %}
+<h2>Status Checker - Verificador de Estado</h2>
+
+<div class="status-header" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+    <div id="smb-status" style="display: inline-block;">
+        <strong>Estado Conexión SMB:</strong>
+        <span id="smb-indicator" class="badge">Verificando...</span>
+        <span id="smb-details"></span>
+    </div>
+    <div style="float: right;">
+        <button onclick="refreshSMBStatus()" class="btn btn-sm btn-primary">Actualizar Estado</button>
+    </div>
+</div>
+
+<h3>Comparación de Datos</h3>
+
+<div class="comparison-container">
+    <!-- Sección: Ingresado en OP (Operador) -->
+    <div class="section">
+        <h4 style="background: #007bff; color: white; padding: 10px;">Ingresado en OP (Operador)</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Batch #</th>
+                    <th>Hole ID</th>
+                    <th>From (m)</th>
+                    <th>To (m)</th>
+                    <th>Machine</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for batch in batches.items %}
+                <tr class="{% if batch in [d.batch for d in discrepancies] %}discrepancy-row{% endif %}">
+                    <td>{{ batch.batch_number }}</td>
+                    <td>{{ batch.hole_id }}</td>
+                    <td>{{ batch.from_depth }}</td>
+                    <td>{{ batch.to_depth }}</td>
+                    <td>{{ batch.machine }}</td>
+                    <td><span class="badge badge-{{ batch.status }}">{{ batch.status }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center;">No hay batches registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Sección: Ingresado en Máquina (SMB) -->
+    <div class="section" style="margin-top: 30px;">
+        <h4 style="background: #28a745; color: white; padding: 10px;">Ingresado en Máquina (Servidor SMB)</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Core ID</th>
+                    <th>Machine ID</th>
+                    <th>From (m)</th>
+                    <th>To (m)</th>
+                    <th>Fecha Escaneo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if smb_batches_data %}
+                    {% for smb_batch in smb_batches_data[:30] %}
+                    <tr>
+                        <td>{{ smb_batch.core_id }}</td>
+                        <td>{{ smb_batch.machine_id }}</td>
+                        <td>{{ smb_batch.depth_from }}</td>
+                        <td>{{ smb_batch.depth_to }}</td>
+                        <td>{{ smb_batch.scan_date.strftime('%Y-%m-%d %H:%M') if smb_batch.scan_date else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center;">
+                        {% if smb_connection_status and not smb_connection_status.connected %}
+                            <span style="color: red;">No se pudo conectar al servidor SMB</span>
+                        {% else %}
+                            No hay datos disponibles en el servidor SMB
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Discrepancias detectadas -->
+{% if discrepancies %}
+<div class="alert alert-warning" style="margin-top: 30px;">
+    <h4>⚠️ Discrepancias Detectadas ({{ discrepancies|length }})</h4>
+    <ul>
+        {% for disc in discrepancies %}
+        <li>
+            <strong>Batch #{{ disc.batch.batch_number }}</strong> ({{ disc.batch.hole_id }}):
+            Los datos del operador no coinciden con los datos del servidor SMB.
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Paginación -->
+{% if batches.pages > 1 %}
+<div class="pagination" style="margin-top: 20px;">
+    {% if batches.has_prev %}
+        <a href="{{ url_for('status_checker', page=batches.prev_num) }}">&laquo; Anterior</a>
+    {% endif %}
+    
+    <span>Página {{ batches.page }} de {{ batches.pages }}</span>
+    
+    {% if batches.has_next %}
+        <a href="{{ url_for('status_checker', page=batches.next_num) }}">Siguiente &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update SMB status indicator
+function updateSMBIndicator(status) {
+    const indicator = document.getElementById('smb-indicator');
+    const details = document.getElementById('smb-details');
+    
+    if (status.connected) {
+        indicator.className = 'badge badge-success';
+        indicator.textContent = 'Conectado';
+        details.textContent = status.batches_found ? `(${status.batches_found} batches encontrados)` : '';
+    } else {
+        indicator.className = 'badge badge-danger';
+        indicator.textContent = 'Desconectado';
+        details.textContent = status.error ? `(Error: ${status.error})` : '';
+    }
+    
+    if (status.last_check) {
+        details.textContent += ` - Última verificación: ${new Date(status.last_check).toLocaleTimeString()}`;
+    }
+}
+
+// Refresh SMB status
+function refreshSMBStatus() {
+    fetch('{{ url_for("smb_status") }}')
+        .then(response => response.json())
+        .then(data => {
+            updateSMBIndicator(data);
+        })
+        .catch(error => {
+            console.error('Error fetching SMB status:', error);
+        });
+}
+
+// Auto-refresh every 30 seconds
+setInterval(refreshSMBStatus, 30000);
+
+// Initial load
+refreshSMBStatus();
+</script>
+
+<style>
+.discrepancy-row {
+    background-color: #ffcccc !important;
+}
+.discrepancy-row:hover {
+    background-color: #ffaaaa !important;
+}
+.badge-success {
+    background-color: #28a745;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+.badge-pending {
+    background-color: #ffc107;
+    color: black;
+}
+.badge-validated {
+    background-color: #28a745;
+    color: white;
+}
+.badge-discrepancy {
+    background-color: #dc3545;
+    color: white;
+}
+</style>
+{% endblock %}

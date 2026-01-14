@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Batches - Portal de Operaciones{% endblock %}
+
+{% block content %}
+<h2>Lista de Batches</h2>
+
+<div style="margin-bottom: 20px;">
+    <a href="{{ url_for('new_batch') }}" class="btn btn-primary">Nuevo Batch</a>
+    
+    <div style="float: right;">
+        <label>Filtrar por estado:</label>
+        <select onchange="window.location.href='{{ url_for('batches_list') }}?status=' + this.value">
+            <option value="">Todos</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pendiente</option>
+            <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>Validado</option>
+            <option value="discrepancy" {% if status_filter == 'discrepancy' %}selected{% endif %}>Con Discrepancias</option>
+        </select>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Batch #</th>
+            <th>Hole ID</th>
+            <th>From (m)</th>
+            <th>To (m)</th>
+            <th>Machine</th>
+            <th>Estado</th>
+            <th>Fecha Creación</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for batch in batches.items %}
+        <tr>
+            <td>{{ batch.batch_number }}</td>
+            <td>{{ batch.hole_id }}</td>
+            <td>{{ batch.from_depth }}</td>
+            <td>{{ batch.to_depth }}</td>
+            <td>{{ batch.machine }}</td>
+            <td>
+                <span class="badge badge-{{ batch.status }}">{{ batch.status }}</span>
+            </td>
+            <td>{{ batch.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+                <a href="{{ url_for('batch_detail', batch_id=batch.id) }}" class="btn btn-sm btn-info">Ver</a>
+                <a href="{{ url_for('edit_batch', batch_id=batch.id) }}" class="btn btn-sm btn-warning">Editar</a>
+                <form action="{{ url_for('delete_batch', batch_id=batch.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('¿Está seguro de eliminar este batch?');">
+                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="8" style="text-align: center;">No hay batches registrados.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Paginación -->
+{% if batches.pages > 1 %}
+<div class="pagination">
+    {% if batches.has_prev %}
+        <a href="{{ url_for('batches_list', page=batches.prev_num, status=status_filter) }}">&laquo; Anterior</a>
+    {% endif %}
+    
+    <span>Página {{ batches.page }} de {{ batches.pages }}</span>
+    
+    {% if batches.has_next %}
+        <a href="{{ url_for('batches_list', page=batches.next_num, status=status_filter) }}">Siguiente &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
