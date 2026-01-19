@@ -173,7 +173,7 @@ class SMBDataRetriever:
     
     def scan_for_png_images(self):
         """
-        Escanear el servidor SMB en busca de archivos PNG
+        Escanear el servidor SMB en busca de archivos PNG de forma recursiva
         
         Returns:
             Lista de diccionarios con información de archivos PNG encontrados
@@ -184,57 +184,74 @@ class SMBDataRetriever:
             if not self.connect():
                 return png_files
             
-            # Listar máquinas (directorios de nivel superior)
-            machines = self.connection.listPath(
-                self.config['SMB_SHARE_NAME'],
-                '/'
-            )
-            
-            for machine in machines:
-                if machine.isDirectory and machine.filename not in ['.', '..']:
-                    machine_id = machine.filename
-                    
-                    # Listar núcleos dentro de cada máquina
-                    try:
-                        cores = self.connection.listPath(
-                            self.config['SMB_SHARE_NAME'],
-                            f"/{machine_id}/"
-                        )
-                        
-                        for core in cores:
-                            if core.isDirectory and core.filename not in ['.', '..']:
-                                core_id = core.filename
-                                
-                                # Listar archivos dentro de cada núcleo
-                                try:
-                                    files = self.connection.listPath(
-                                        self.config['SMB_SHARE_NAME'],
-                                        f"/{machine_id}/{core_id}/"
-                                    )
-                                    
-                                    for file_info in files:
-                                        if (not file_info.isDirectory and 
-                                            file_info.filename.lower().endswith('.png') and
-                                            file_info.filename not in ['.', '..']):
-                                            
-                                            png_files.append({
-                                                'filename': file_info.filename,
-                                                'full_path': f"/{machine_id}/{core_id}/{file_info.filename}",
-                                                'machine_id': machine_id,
-                                                'core_id': core_id,
-                                                'file_size': file_info.file_size,
-                                                'create_time': datetime.fromtimestamp(file_info.create_time).isoformat(),
-                                                'last_write_time': datetime.fromtimestamp(file_info.last_write_time).isoformat()
-                                            })
-                                except Exception as e:
-                                    print(f"Error listando archivos en {machine_id}/{core_id}: {str(e)}")
-                    except Exception as e:
-                        print(f"Error listando cores para máquina {machine_id}: {str(e)}")
+            # Escanear recursivamente desde la raíz
+            png_files = self._scan_directory_recursive('/', png_files)
         
         except Exception as e:
             print(f"Error escaneando servidor SMB para PNG: {str(e)}")
         finally:
             self.disconnect()
+        
+        return png_files
+    
+    def _scan_directory_recursive(self, path, png_files):
+        """
+        Escanear un directorio de forma recursiva en busca de archivos PNG
+        
+        Args:
+            path: Ruta del directorio a escanear
+            png_files: Lista acumulativa de archivos PNG encontrados
+            
+        Returns:
+            Lista actualizada de archivos PNG
+        """
+        try:
+            # Listar contenido del directorio
+            items = self.connection.listPath(
+                self.config['SMB_SHARE_NAME'],
+                path
+            )
+            
+            for item in items:
+                # Saltar referencias de directorio actual y padre
+                if item.filename in ['.', '..']:
+                    continue
+                
+                # Construir ruta completa
+                if path.endswith('/'):
+                    item_path = f"{path}{item.filename}"
+                else:
+                    item_path = f"{path}/{item.filename}"
+                
+                if item.isDirectory:
+                    # Si es un directorio, escanear recursivamente
+                    png_files = self._scan_directory_recursive(item_path, png_files)
+                elif item.filename.lower().endswith('.png'):
+                    # Si es un archivo PNG, agregarlo a la lista
+                    # Extraer información de la ruta para organización
+                    path_parts = item_path.strip('/').split('/')
+                    
+                    png_info = {
+                        'filename': item.filename,
+                        'full_path': item_path,
+                        'file_size': item.file_size,
+                        'create_time': datetime.fromtimestamp(item.create_time).isoformat(),
+                        'last_write_time': datetime.fromtimestamp(item.last_write_time).isoformat(),
+                        'folder_path': '/'.join(path_parts[:-1]) if len(path_parts) > 1 else '/'
+                    }
+                    
+                    # Agregar información de organización jerárquica
+                    if len(path_parts) >= 2:
+                        png_info['machine_id'] = path_parts[0]
+                        png_info['core_id'] = path_parts[1]
+                    else:
+                        png_info['machine_id'] = path_parts[0] if path_parts else ''
+                        png_info['core_id'] = ''
+                    
+                    png_files.append(png_info)
+        
+        except Exception as e:
+            print(f"Error escaneando directorio {path}: {str(e)}")
         
         return png_files
     

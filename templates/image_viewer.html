@@ -36,12 +36,17 @@
                      data-filename="{{ image.filename }}"
                      data-machine="{{ image.machine_id }}"
                      data-core="{{ image.core_id }}"
-                     onclick="showImage(event, '{{ image.full_path }}', '{{ image.filename }}', '{{ image.machine_id }}', '{{ image.core_id }}')"
+                     data-folder="{{ image.folder_path }}"
+                     onclick="showImage(event, '{{ image.full_path }}', '{{ image.filename }}', '{{ image.machine_id }}', '{{ image.core_id }}', '{{ image.folder_path }}')"
                      style="padding: 10px; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; background: white; transition: all 0.2s;">
                     <div style="font-weight: bold; color: #007bff; margin-bottom: 5px;">{{ image.filename }}</div>
                     <div style="font-size: 0.85em; color: #666;">
+                        {% if image.folder_path %}
+                        <div style="font-style: italic; color: #888; word-break: break-all;">{{ image.folder_path }}</div>
+                        {% else %}
                         <div>Machine: {{ image.machine_id }}</div>
                         <div>Core: {{ image.core_id }}</div>
+                        {% endif %}
                         <div>Size: {{ (image.file_size / 1024) | round(2) }} KB</div>
                     </div>
                 </div>
@@ -112,7 +117,7 @@
 </style>
 
 <script>
-function showImage(event, fullPath, filename, machineId, coreId) {
+function showImage(event, fullPath, filename, machineId, coreId, folderPath) {
     // Remove previous selection
     document.querySelectorAll('.image-item').forEach(item => {
         item.classList.remove('selected');
@@ -130,15 +135,11 @@ function showImage(event, fullPath, filename, machineId, coreId) {
         <div class="image-info">
             <h3>${filename}</h3>
             <div class="info-row">
-                <span class="info-label">Machine:</span>
-                <span>${machineId}</span>
+                <span class="info-label">Folder Path:</span>
+                <span style="font-family: monospace; font-size: 0.9em;">${folderPath}</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Core:</span>
-                <span>${coreId}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Path:</span>
+                <span class="info-label">Full Path:</span>
                 <span style="font-family: monospace; font-size: 0.9em;">${fullPath}</span>
             </div>
         </div>
@@ -165,8 +166,9 @@ function filterImages() {
         const filename = item.getAttribute('data-filename').toLowerCase();
         const machine = item.getAttribute('data-machine').toLowerCase();
         const core = item.getAttribute('data-core').toLowerCase();
+        const folder = item.getAttribute('data-folder').toLowerCase();
         
-        if (filename.includes(searchTerm) || machine.includes(searchTerm) || core.includes(searchTerm)) {
+        if (filename.includes(searchTerm) || machine.includes(searchTerm) || core.includes(searchTerm) || folder.includes(searchTerm)) {
             item.style.display = '';
             visibleCount++;
         } else {
