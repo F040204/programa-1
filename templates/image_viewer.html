@@ -15,7 +15,7 @@
     <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
         Última verificación: {{ smb_status.last_check }}
     </div>
-    <button onclick="refreshImages()" class="btn btn-sm btn-primary" style="margin-top: 10px;">Actualizar Lista</button>
+    <button onclick="refreshImages(event)" class="btn btn-sm btn-primary" style="margin-top: 10px;">Actualizar Lista</button>
 </div>
 
 <div style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; height: calc(100vh - 300px);">
@@ -36,7 +36,7 @@
                      data-filename="{{ image.filename }}"
                      data-machine="{{ image.machine_id }}"
                      data-core="{{ image.core_id }}"
-                     onclick="showImage('{{ image.full_path }}', '{{ image.filename }}', '{{ image.machine_id }}', '{{ image.core_id }}')"
+                     onclick="showImage(event, '{{ image.full_path }}', '{{ image.filename }}', '{{ image.machine_id }}', '{{ image.core_id }}')"
                      style="padding: 10px; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; background: white; transition: all 0.2s;">
                     <div style="font-weight: bold; color: #007bff; margin-bottom: 5px;">{{ image.filename }}</div>
                     <div style="font-size: 0.85em; color: #666;">
@@ -112,7 +112,7 @@
 </style>
 
 <script>
-function showImage(fullPath, filename, machineId, coreId) {
+function showImage(event, fullPath, filename, machineId, coreId) {
     // Remove previous selection
     document.querySelectorAll('.image-item').forEach(item => {
         item.classList.remove('selected');
@@ -181,7 +181,7 @@ function filterImages() {
     }
 }
 
-function refreshImages() {
+function refreshImages(event) {
     const button = event.target;
     button.disabled = true;
     button.textContent = 'Actualizando...';
