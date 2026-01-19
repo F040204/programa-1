@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Portal de Operaciones</title>
+    <title>Login - Visor de Imágenes SMB</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         .login-container {
@@ -49,7 +49,7 @@
 </head>
 <body>
     <div class="login-container">
-        <h2 style="text-align: center; margin-bottom: 30px;">Portal de Operaciones</h2>
+        <h2 style="text-align: center; margin-bottom: 30px;">Visor de Imágenes SMB</h2>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

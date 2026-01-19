@@ -1,108 +1,54 @@
-# Portal de Operaciones (Scripting Batch)
+# Visor de Imágenes SMB
 
-Sistema web de gestión y monitoreo de operaciones de escaneo de núcleos de perforación (drill cores) para máquinas Orexplore.
+Sistema web para visualización de imágenes PNG almacenadas en carpetas SMB (Server Message Block).
 
-## 🆕 Características Principales (v2.0)
+## 🆕 Características Principales
 
-### 🔐 Sistema de Autenticación Completo
+### 🔐 Sistema de Autenticación
 - Login/Logout seguro con contraseñas hasheadas
 - Sesiones persistentes con tiempo de expiración (24 horas)
 - Rate limiting (máximo 5 intentos fallidos, bloqueo de 5 minutos)
 - Creación de usuarios por administradores
 - Usuario por defecto: `admin` / `admin` (debe cambiarse en producción)
 
-### 📊 Gestión de Batches
-- Registro de nuevos batches con validación en tiempo real
-- Edición de batches existentes
-- Eliminación con renumeración automática
-- Paginación (30 items por página)
-- Campos: Hole ID, From (m), To (m), Machine, Comentarios
+### 🖼️ Visor de Imágenes
+- Exploración automática de carpetas SMB en busca de archivos PNG
+- Visualización de lista completa de imágenes encontradas
+- Búsqueda y filtrado por nombre de archivo, máquina o core
+- Vista previa de imágenes sin salir de la página
+- Panel de dos columnas:
+  - Izquierda: Lista navegable de imágenes
+  - Derecha: Visualización de imagen seleccionada
+- Scroll independiente en ambos paneles
+- Botón de actualización para refrescar la lista de imágenes
 
-### 🔍 Status Checker
-- Comparación automática entre datos ingresados y datos del servidor SMB
-- Tabla con dos secciones: "Ingresado en OP" y "Ingresado en Máquina"
-- Resaltado visual de discrepancias en rojo
-- Indicador de conexión SMB con actualización cada 30 segundos
-
-### 📈 Visualización de Estadísticas
-- Contador total de metros escaneados
-- Gráfico de progreso diario (por hora)
-- Gráfico de progreso mensual (últimos 30 días)
-- Actualización automática
-
-### 🔗 Integración con Sistemas Externos
-- Página de telemetría (URL configurable)
-- Enlace a minerales: http://172.16.11.155:8005/get_html
+### 🔗 Integración SMB
+- Conexión automática a servidor SMB
+- Exploración recursiva de carpetas (Machine/Core/Images)
+- Indicador visual del estado de conexión
+- Cache de 30 segundos para optimizar rendimiento
 
 ### 🏥 Health Check
 - Endpoint `/health` que proporciona:
-  - Estado general del sistema (healthy/degraded)
-  - Estado de la base de datos (cantidad de batches)
+  - Estado general del sistema
+  - Estado de la base de datos
   - Estado de conexión SMB
   - Timestamp de verificación
   - Formato JSON para integración con herramientas de monitoreo
 
-### 🗄️ Sistema de Caché
-- Caché automático de datos (TTL: 30 segundos)
-- Thread-safe con locks
-- Endpoint de invalidación: `POST /api/cache/invalidate`
-
 ## Descripción
 
-Portal de Operaciones es una aplicación web desarrollada en Python con Flask que permite:
+Visor de Imágenes SMB es una aplicación web desarrollada en Python con Flask que permite:
 
-- **Gestionar operaciones**: Crear, editar y eliminar registros de operaciones de escaneo
-- **Monitoreo en tiempo real**: Visualizar el estado de todas las operaciones
-- **Validación de datos**: Comparar datos ingresados manualmente con información del servidor SMB
-- **Detección de discrepancias**: Identificar inconsistencias entre datos manuales y automáticos
-- **Integración SMB**: Sincronización automática con servidor de archivos compartidos
-- **Dashboard**: Estadísticas y reportes visuales
+- **Autenticación segura**: Sistema de login con control de acceso
+- **Exploración de imágenes**: Búsqueda automática de archivos PNG en servidor SMB
+- **Visualización**: Ver imágenes directamente en el navegador
+- **Búsqueda**: Filtrar imágenes por diferentes criterios
+- **Gestión de usuarios**: Crear y administrar usuarios del sistema (solo administradores)
 
 ## Objetivo General
 
-Proporcionar una plataforma centralizada para el registro, seguimiento y validación de operaciones de escaneo de núcleos de perforación, asegurando la integridad y consistencia de los datos entre lo ingresado por operadores y lo generado por las máquinas.
-
-## Objetivos Específicos
-
-### Trazabilidad Completa
-- Registro detallado de cada batch escaneado
-- Identificación de hoyo, máquina y profundidades
-- Timestamp de cada operación
-
-### Control de Calidad
-- Validación automática de datos contra servidor SMB
-- Detección visual de discrepancias (resaltado en rojo)
-- Sistema de estados (correcto/incorrecto)
-
-### Monitoreo en Tiempo Real
-- Visualización de metros escaneados totales
-- Gráficos de progreso diario y mensual
-- Estado de conectividad del servidor
-
-### Gestión Segura
-- Sistema de autenticación de usuarios
-- Control de sesiones
-- Protección contra ataques (rate limiting, validación de entrada)
-
-## Características
-
-### Gestión de Operaciones
-- Registro manual de operaciones de escaneo
-- Información detallada: ID de núcleo, máquina, operador, fecha, profundidad
-- Estados: Pendiente, Validado, Con Discrepancias
-- Historial completo de operaciones
-
-### Validación Automática
-- Integración con servidor SMB para obtener datos de máquinas Orexplore
-- Comparación automática de datos manuales vs. datos del servidor
-- Detección de discrepancias en profundidades y archivos
-- Notas de validación detalladas
-
-### Interfaz Web
-- Dashboard con estadísticas en tiempo real
-- Filtros y búsqueda de operaciones
-- Paginación de resultados
-- Diseño responsive y moderno
+Proporcionar una plataforma centralizada y fácil de usar para visualizar imágenes PNG almacenadas en un servidor SMB, con navegación intuitiva y búsqueda eficiente.
 
 ## Requisitos
 
@@ -110,7 +56,7 @@ Proporcionar una plataforma centralizada para el registro, seguimiento y validac
 - Flask 3.0.0
 - SQLAlchemy
 - pysmb (para integración SMB)
-- Acceso a servidor SMB (opcional)
+- Acceso a servidor SMB
 
 ## Instalación
 
@@ -135,12 +81,12 @@ pip install -r requirements.txt
 Crear archivo `.env` en la raíz del proyecto:
 ```env
 SECRET_KEY=tu-clave-secreta-aqui
-DATABASE_URL=sqlite:///operations.db
+DATABASE_URL=sqlite:///images.db
 
-# Configuración SMB (opcional)
+# Configuración SMB (requerido)
 SMB_SERVER_NAME=servidor-smb
 SMB_SERVER_IP=192.168.1.100
-SMB_SHARE_NAME=orexplore_data
+SMB_SHARE_NAME=shared_folder
 SMB_USERNAME=usuario
 SMB_PASSWORD=contraseña
 SMB_DOMAIN=WORKGROUP
@@ -169,29 +115,17 @@ La aplicación estará disponible en: `http://localhost:5000`
    - **Contraseña**: `admin`
 3. **IMPORTANTE**: Cambiar la contraseña del administrador después del primer acceso
 
-### Crear un nuevo batch
+### Visualizar imágenes
 
-1. Ir a "Nuevo Batch" en el menú
-2. Completar el formulario:
-   - **Hole ID**: Identificador del hoyo (ej: DDH-001)
-   - **From (m)**: Profundidad inicial en metros
-   - **To (m)**: Profundidad final en metros
-   - **Machine**: Nombre de la máquina (ej: OREX-01)
-   - **Comentarios**: Notas opcionales
-3. Hacer clic en "Crear Batch"
+1. Después del login, serás redirigido automáticamente al visor de imágenes
+2. La lista de imágenes PNG se carga automáticamente desde el servidor SMB
+3. Usar la barra de búsqueda para filtrar imágenes
+4. Hacer clic en cualquier imagen de la lista para visualizarla
+5. Usar el scroll para navegar por más imágenes mientras se visualiza una
 
-### Verificar el estado con Status Checker
+### Actualizar lista de imágenes
 
-1. Ir a "Status Checker" en el menú
-2. Ver la comparación entre datos ingresados y datos del servidor SMB
-3. Las discrepancias se resaltan en rojo
-4. El indicador de conexión SMB se actualiza cada 30 segundos
-
-### Ver estadísticas
-
-1. Ir a "Estadísticas" en el menú
-2. Ver el total de metros escaneados
-3. Analizar gráficos de progreso diario y mensual
+- Hacer clic en el botón "Actualizar Lista" para refrescar las imágenes del servidor SMB
 
 ### Crear nuevos usuarios (solo administradores)
 
@@ -211,14 +145,14 @@ Respuesta ejemplo:
 ```json
 {
   "status": "healthy",
-  "timestamp": "2026-01-14T19:11:09Z",
+  "timestamp": "2026-01-19T15:54:00Z",
   "database": {
     "status": "healthy",
-    "batch_count": 42
+    "user_count": 2
   },
   "smb": {
     "status": "healthy",
-    "batches_found": 15
+    "images_found": 42
   }
 }
 ```
@@ -229,20 +163,17 @@ Respuesta ejemplo:
 programa-1/
 ├── app.py                  # Aplicación principal Flask
 ├── config.py              # Configuración
-├── models.py              # Modelos de base de datos
+├── models.py              # Modelo de base de datos (User)
 ├── smb_utils.py           # Utilidades para servidor SMB
-├── validation.py          # Lógica de validación
+├── cache_utils.py         # Sistema de caché thread-safe
 ├── requirements.txt       # Dependencias
 ├── .gitignore            # Archivos ignorados por git
 ├── templates/            # Plantillas HTML
 │   ├── base.html
-│   ├── index.html
-│   ├── operations.html
-│   ├── operation_detail.html
-│   ├── new_operation.html
-│   ├── edit_operation.html
-│   ├── dashboard.html
-│   └── sync_smb.html
+│   ├── login.html
+│   ├── image_viewer.html
+│   ├── create_user.html
+│   └── users_list.html
 └── static/              # Archivos estáticos
     ├── css/
     │   └── style.css
@@ -252,36 +183,13 @@ programa-1/
 
 ## API REST
 
-La aplicación incluye endpoints API para integración:
+La aplicación incluye endpoints API:
 
-- `GET /api/operations` - Lista todas las operaciones
-- `GET /api/operation/<id>` - Detalle de una operación
-
-## Modelos de Datos
-
-### Operation
-- `id`: Identificador único
-- `core_id`: ID del núcleo de perforación
-- `machine_id`: ID de la máquina Orexplore
-- `operator_name`: Nombre del operador
-- `scan_date`: Fecha del escaneo
-- `depth_from`: Profundidad inicial (metros)
-- `depth_to`: Profundidad final (metros)
-- `status`: Estado (pending, validated, discrepancy)
-- `notes`: Notas adicionales
-- `validation_notes`: Resultado de validación
-- `validated_at`: Fecha de validación
-
-### ScanData
-- `id`: Identificador único
-- `operation_id`: Referencia a operación
-- `source`: Fuente de datos (manual, smb)
-- `file_path`: Ruta del archivo
-- `depth_from`: Profundidad inicial
-- `depth_to`: Profundidad final
-- `scan_quality`: Calidad del escaneo
-- `file_size`: Tamaño del archivo
-- `metadata`: Metadatos adicionales
+- `GET /health` - Estado del sistema
+- `GET /api/image/<path>` - Obtener imagen desde SMB
+- `POST /api/refresh-images` - Refrescar lista de imágenes
+- `POST /api/cache/invalidate` - Invalidar caché
+- `GET /api/cache/stats` - Estadísticas de caché
 
 ## Configuración del Servidor SMB
 
@@ -295,10 +203,13 @@ Para habilitar la integración con servidor SMB:
    /share_name/
    ├── MACHINE-01/
    │   ├── CORE-001/
-   │   │   ├── scan_file_1.dat
-   │   │   └── scan_file_2.dat
+   │   │   ├── image1.png
+   │   │   └── image2.png
    │   └── CORE-002/
+   │       └── image3.png
    └── MACHINE-02/
+       └── CORE-003/
+           └── image4.png
    ```
 
 ## Desarrollo
@@ -315,9 +226,17 @@ python app.py
 La base de datos se crea automáticamente al iniciar la aplicación. Para recrearla:
 
 ```bash
-rm operations.db
+rm images.db
 python -c "from app import app, db; app.app_context().push(); db.create_all()"
 ```
+
+## Seguridad
+
+- Las contraseñas se almacenan hasheadas usando Werkzeug
+- Rate limiting en el login (5 intentos, bloqueo de 5 minutos)
+- Sesiones con expiración de 24 horas
+- Autenticación requerida para todas las páginas excepto login
+- Control de acceso basado en roles (admin/usuario)
 
 ## Licencia
 
