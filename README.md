@@ -198,19 +198,25 @@ Para habilitar la integración con servidor SMB:
 1. Configurar las variables de entorno en `.env`
 2. Asegurar conectividad de red con el servidor
 3. Verificar permisos de lectura en el compartido
-4. La estructura esperada en SMB es:
+4. El sistema escanea recursivamente toda la estructura de carpetas en busca de archivos PNG. Soporta cualquier profundidad y organización de directorios:
    ```
    /share_name/
-   ├── MACHINE-01/
-   │   ├── CORE-001/
-   │   │   ├── image1.png
-   │   │   └── image2.png
-   │   └── CORE-002/
-   │       └── image3.png
+   ├── Orexplore/
+   │   ├── Oux-Plore_Test/
+   │   │   ├── Batch-1/
+   │   │   │   ├── image1.png
+   │   │   │   └── image2.png
+   │   │   └── Batch-2/
+   │   │       └── scan.png
+   │   └── SampleA/
+   │       └── batch-1/
+   │           └── test.png
    └── MACHINE-02/
        └── CORE-003/
            └── image4.png
    ```
+   
+   El escáner recursivo encuentra automáticamente todos los archivos PNG sin importar la estructura de carpetas.
 
 ## Desarrollo
 
