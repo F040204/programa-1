@@ -88,6 +88,5 @@ class ThreadSafeCache:
             }
 
 
-# Global cache instances
-batches_cache = ThreadSafeCache(ttl=30)
+# Global cache instance for SMB data
 smb_cache = ThreadSafeCache(ttl=30)
