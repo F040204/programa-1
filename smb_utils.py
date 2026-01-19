@@ -237,13 +237,13 @@ class SMBDataRetriever:
                         'file_size': item.file_size,
                         'create_time': datetime.fromtimestamp(item.create_time).isoformat(),
                         'last_write_time': datetime.fromtimestamp(item.last_write_time).isoformat(),
-                        'folder_path': '/'.join(path_parts[:-1]) if len(path_parts) > 1 else ''
+                        'folder_path': '/'.join(path_parts[:-1]) if len(path_parts) > 1 else '/'
                     }
                     
                     # Agregar información de organización jerárquica
                     if len(path_parts) >= 2:
                         png_info['machine_id'] = path_parts[0]
-                        png_info['core_id'] = path_parts[1] if len(path_parts) > 1 else ''
+                        png_info['core_id'] = path_parts[1]
                     else:
                         png_info['machine_id'] = path_parts[0] if path_parts else ''
                         png_info['core_id'] = ''
