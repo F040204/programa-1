@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta, timezone
 from functools import wraps
@@ -487,6 +487,92 @@ def telemetry():
 def minerals():
     """Redirect to minerals page"""
     return redirect(app.config['MINERALS_URL'])
+
+
+# ============================================================================
+# IMAGE VIEWER
+# ============================================================================
+
+@app.route('/image-viewer')
+@login_required
+def image_viewer():
+    """Page to view PNG images from SMB folders"""
+    # Try to get cached image list
+    image_list = smb_cache.get('png_image_list')
+    smb_connection_status = smb_cache.get('smb_status')
+    
+    if image_list is None:
+        try:
+            smb_retriever = SMBDataRetriever(app.config)
+            image_list = smb_retriever.scan_for_png_images()
+            smb_connection_status = {
+                'connected': True,
+                'images_found': len(image_list),
+                'last_check': utcnow().isoformat()
+            }
+        except Exception as e:
+            image_list = []
+            smb_connection_status = {
+                'connected': False,
+                'error': str(e),
+                'last_check': utcnow().isoformat()
+            }
+        
+        # Cache the data
+        smb_cache.set('png_image_list', image_list)
+        smb_cache.set('smb_status', smb_connection_status)
+    
+    return render_template('image_viewer.html',
+                         images=image_list,
+                         smb_status=smb_connection_status)
+
+
+@app.route('/api/image/<path:image_path>')
+@login_required
+def get_image(image_path):
+    """Serve an image from SMB"""
+    try:
+        smb_retriever = SMBDataRetriever(app.config)
+        image_data = smb_retriever.get_image_file(image_path)
+        
+        if image_data:
+            return send_file(
+                image_data,
+                mimetype='image/png',
+                as_attachment=False,
+                download_name=os.path.basename(image_path)
+            )
+        else:
+            return jsonify({'error': 'Image not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/refresh-images', methods=['POST'])
+@login_required
+def refresh_images():
+    """Refresh the image list from SMB"""
+    try:
+        smb_retriever = SMBDataRetriever(app.config)
+        image_list = smb_retriever.scan_for_png_images()
+        
+        # Update cache
+        smb_cache.set('png_image_list', image_list)
+        smb_cache.set('smb_status', {
+            'connected': True,
+            'images_found': len(image_list),
+            'last_check': utcnow().isoformat()
+        })
+        
+        return jsonify({
+            'success': True,
+            'images_found': len(image_list)
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 # ============================================================================
