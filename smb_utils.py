@@ -2,6 +2,7 @@ from smb.SMBConnection import SMBConnection
 from datetime import datetime
 import tempfile
 import os
+import io
 
 
 class SMBDataRetriever:
@@ -169,3 +170,105 @@ class SMBDataRetriever:
             pass
         
         return 0.0
+    
+    def scan_for_png_images(self):
+        """
+        Escanear el servidor SMB en busca de archivos PNG
+        
+        Returns:
+            Lista de diccionarios con información de archivos PNG encontrados
+        """
+        png_files = []
+        
+        try:
+            if not self.connect():
+                return png_files
+            
+            # Listar máquinas (directorios de nivel superior)
+            machines = self.connection.listPath(
+                self.config['SMB_SHARE_NAME'],
+                '/'
+            )
+            
+            for machine in machines:
+                if machine.isDirectory and machine.filename not in ['.', '..']:
+                    machine_id = machine.filename
+                    
+                    # Listar núcleos dentro de cada máquina
+                    try:
+                        cores = self.connection.listPath(
+                            self.config['SMB_SHARE_NAME'],
+                            f"/{machine_id}/"
+                        )
+                        
+                        for core in cores:
+                            if core.isDirectory and core.filename not in ['.', '..']:
+                                core_id = core.filename
+                                
+                                # Listar archivos dentro de cada núcleo
+                                try:
+                                    files = self.connection.listPath(
+                                        self.config['SMB_SHARE_NAME'],
+                                        f"/{machine_id}/{core_id}/"
+                                    )
+                                    
+                                    for file_info in files:
+                                        if (not file_info.isDirectory and 
+                                            file_info.filename.lower().endswith('.png') and
+                                            file_info.filename not in ['.', '..']):
+                                            
+                                            png_files.append({
+                                                'filename': file_info.filename,
+                                                'full_path': f"/{machine_id}/{core_id}/{file_info.filename}",
+                                                'machine_id': machine_id,
+                                                'core_id': core_id,
+                                                'file_size': file_info.file_size,
+                                                'create_time': datetime.fromtimestamp(file_info.create_time).isoformat(),
+                                                'last_write_time': datetime.fromtimestamp(file_info.last_write_time).isoformat()
+                                            })
+                                except Exception as e:
+                                    print(f"Error listando archivos en {machine_id}/{core_id}: {str(e)}")
+                    except Exception as e:
+                        print(f"Error listando cores para máquina {machine_id}: {str(e)}")
+        
+        except Exception as e:
+            print(f"Error escaneando servidor SMB para PNG: {str(e)}")
+        finally:
+            self.disconnect()
+        
+        return png_files
+    
+    def get_image_file(self, file_path):
+        """
+        Obtener un archivo de imagen del servidor SMB
+        
+        Args:
+            file_path: Ruta completa del archivo en el servidor SMB
+            
+        Returns:
+            BytesIO object con el contenido del archivo o None si hay error
+        """
+        try:
+            if not self.connect():
+                return None
+            
+            # Crear buffer en memoria para el archivo
+            file_obj = io.BytesIO()
+            
+            # Descargar archivo del servidor SMB
+            self.connection.retrieveFile(
+                self.config['SMB_SHARE_NAME'],
+                file_path,
+                file_obj
+            )
+            
+            # Resetear el puntero al inicio del buffer
+            file_obj.seek(0)
+            
+            return file_obj
+        
+        except Exception as e:
+            print(f"Error obteniendo imagen {file_path}: {str(e)}")
+            return None
+        finally:
+            self.disconnect()

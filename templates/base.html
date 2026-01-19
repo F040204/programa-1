@@ -3,23 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Portal de Operaciones{% endblock %}</title>
+    <title>{% block title %}Visor de Imágenes SMB{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
             <div class="navbar-brand">
-                <h1>Portal de Operaciones - Orexplore</h1>
+                <h1>Visor de Imágenes SMB</h1>
             </div>
             <ul class="navbar-menu">
-                <li><a href="{{ url_for('index') }}">Inicio</a></li>
-                <li><a href="{{ url_for('batches_list') }}">Batches</a></li>
-                <li><a href="{{ url_for('new_batch') }}">Nuevo Batch</a></li>
-                <li><a href="{{ url_for('status_checker') }}">Status Checker</a></li>
-                <li><a href="{{ url_for('statistics') }}">Estadísticas</a></li>
-                <li><a href="{{ url_for('telemetry') }}">Telemetría</a></li>
-                <li><a href="{{ url_for('minerals') }}">Minerales</a></li>
+                <li><a href="{{ url_for('image_viewer') }}">Visor de Imágenes</a></li>
                 {% if current_user.is_authenticated %}
                     {% if current_user.is_admin %}
                         <li><a href="{{ url_for('users_list') }}">Usuarios</a></li>
@@ -46,7 +40,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 Portal de Operaciones - Scripting Batch. Sistema de gestión de escaneo de núcleos de perforación.</p>
+            <p>&copy; 2026 Visor de Imágenes SMB. Sistema de visualización de imágenes PNG desde servidor SMB.</p>
         </div>
     </footer>
 
