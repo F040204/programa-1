@@ -151,14 +151,12 @@ def users_list():
 # ============================================================================
 
 @app.route('/')
-@login_required
 def index():
     """Redirect to image viewer"""
     return redirect(url_for('image_viewer'))
 
 
 @app.route('/image-viewer')
-@login_required
 def image_viewer():
     """Page to view PNG images from SMB folders"""
     # Try to get cached image list
@@ -192,7 +190,6 @@ def image_viewer():
 
 
 @app.route('/api/image/<path:image_path>')
-@login_required
 def get_image(image_path):
     """Serve an image from SMB"""
     try:
@@ -213,7 +210,6 @@ def get_image(image_path):
 
 
 @app.route('/api/refresh-images', methods=['POST'])
-@login_required
 def refresh_images():
     """Refresh the image list from SMB"""
     try:
@@ -244,7 +240,6 @@ def refresh_images():
 # ============================================================================
 
 @app.route('/api/cache/invalidate', methods=['POST'])
-@login_required
 def invalidate_cache():
     """Invalidate cache manually"""
     smb_cache.invalidate()
@@ -256,7 +251,6 @@ def invalidate_cache():
 
 
 @app.route('/api/cache/stats')
-@login_required
 def cache_stats():
     """Get cache statistics"""
     return jsonify({
