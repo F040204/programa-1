@@ -18,8 +18,18 @@
     <button onclick="refreshImages(event)" class="btn btn-sm btn-primary" style="margin-top: 10px;">Actualizar Lista</button>
 </div>
 
+{# Organizar imágenes por hole_name #}
+{% set images_by_hole = {} %}
+{% for image in images %}
+    {% set hole = image.hole_name or 'Unknown' %}
+    {% if hole not in images_by_hole %}
+        {% set _ = images_by_hole.update({hole: []}) %}
+    {% endif %}
+    {% set _ = images_by_hole[hole].append(image) %}
+{% endfor %}
+
 <div style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; height: calc(100vh - 300px);">
-    <!-- Left panel: Image list -->
+    <!-- Left panel: Image list with hole selectors -->
     <div style="overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: #f8f9fa;">
         <h3 class="image-list-header" style="margin-top: 0;">Imágenes Disponibles ({{ images|length }})</h3>
         
@@ -31,30 +41,41 @@
         
         {% if images %}
             <div id="image-list" style="display: flex; flex-direction: column; gap: 5px;">
-                {% for image in images %}
-                <div class="image-item" 
-                     data-filename="{{ image.filename }}"
-                     data-machine="{{ image.machine_id }}"
-                     data-core="{{ image.core_id }}"
-                     data-folder="{{ image.folder_path }}"
-                     onclick="showImage(event, '{{ image.full_path }}', '{{ image.filename }}', '{{ image.machine_id }}', '{{ image.core_id }}', '{{ image.folder_path }}')"
-                     style="padding: 10px; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; background: white; transition: all 0.2s;">
-                    <div style="font-weight: bold; color: #007bff; margin-bottom: 5px;">{{ image.filename }}</div>
-                    <div style="font-size: 0.85em; color: #666;">
-                        {% if image.folder_path %}
-                        <div style="font-style: italic; color: #888; word-break: break-all;">{{ image.folder_path }}</div>
-                        {% else %}
-                        <div>Machine: {{ image.machine_id }}</div>
-                        <div>Core: {{ image.core_id }}</div>
-                        {% endif %}
-                        <div>Size: {{ (image.file_size / 1024) | round(2) }} KB</div>
+                {% for hole_name in images_by_hole.keys()|sort %}
+                <div class="hole-section" data-hole="{{ hole_name }}">
+                    <!-- Hole selector/divider -->
+                    <div class="hole-divider" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 15px; border-radius: 8px; margin: 15px 0 10px 0; font-weight: bold; font-size: 1.05em; box-shadow: 0 2px 4px rgba(0,0,0,0.15); cursor: pointer;" onclick="toggleHoleSection('{{ hole_name }}')">
+                        <span id="toggle-icon-{{ hole_name }}" style="margin-right: 8px;">▼</span>
+                        Selected hole: {{ hole_name }}
+                    </div>
+                    
+                    <!-- Images for this hole -->
+                    <div id="hole-images-{{ hole_name }}" class="hole-images-container">
+                        {% for image in images_by_hole[hole_name] %}
+                        <div class="image-item" 
+                             data-filename="{{ image.filename }}"
+                             data-machine="{{ image.machine_id }}"
+                             data-core="{{ image.core_id }}"
+                             data-folder="{{ image.folder_path }}"
+                             data-hole="{{ image.hole_name }}"
+                             data-batch="{{ image.batch }}"
+                             data-sample="{{ image.sample }}"
+                             onclick="showImage(event, '{{ image.full_path }}', '{{ image.filename }}', '{{ image.machine_id }}', '{{ image.core_id }}', '{{ image.folder_path }}', '{{ image.hole_name }}', '{{ image.batch }}', '{{ image.sample }}')"
+                             style="padding: 10px; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; background: white; transition: all 0.2s; margin-left: 10px;">
+                            <div style="font-weight: bold; color: #007bff; margin-bottom: 5px;">{{ image.display_name }}</div>
+                            <div style="font-size: 0.85em; color: #666;">
+                                <div style="font-style: italic; color: #888;">{{ image.filename }}</div>
+                                <div>Size: {{ (image.file_size / 1024) | round(2) }} KB</div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
         {% else %}
             <p style="text-align: center; color: #666; margin-top: 20px;">
-                No se encontraron imágenes PNG en el servidor SMB.
+                No se encontraron imágenes PNG en carpetas batch-xxx.xx/sample-N en el servidor SMB.
             </p>
         {% endif %}
     </div>
@@ -117,7 +138,20 @@
 </style>
 
 <script>
-function showImage(event, fullPath, filename, machineId, coreId, folderPath) {
+function toggleHoleSection(holeName) {
+    const container = document.getElementById('hole-images-' + holeName);
+    const icon = document.getElementById('toggle-icon-' + holeName);
+    
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        icon.textContent = '▼';
+    } else {
+        container.style.display = 'none';
+        icon.textContent = '▶';
+    }
+}
+
+function showImage(event, fullPath, filename, machineId, coreId, folderPath, holeName, batch, sample) {
     // Remove previous selection
     document.querySelectorAll('.image-item').forEach(item => {
         item.classList.remove('selected');
@@ -134,6 +168,18 @@ function showImage(event, fullPath, filename, machineId, coreId, folderPath) {
     viewerContent.innerHTML = `
         <div class="image-info">
             <h3>${filename}</h3>
+            <div class="info-row">
+                <span class="info-label">Hole:</span>
+                <span style="font-weight: bold; color: #667eea;">${holeName}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Batch:</span>
+                <span>batch-${batch}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Sample:</span>
+                <span>sample ${sample}</span>
+            </div>
             <div class="info-row">
                 <span class="info-label">Folder Path:</span>
                 <span style="font-family: monospace; font-size: 0.9em;">${folderPath}</span>
@@ -160,19 +206,37 @@ function showImage(event, fullPath, filename, machineId, coreId, folderPath) {
 function filterImages() {
     const searchTerm = document.getElementById('search-box').value.toLowerCase();
     const imageItems = document.querySelectorAll('.image-item');
+    const holeSections = document.querySelectorAll('.hole-section');
     let visibleCount = 0;
     
+    // First, check all image items and count visible ones
     imageItems.forEach(item => {
         const filename = item.getAttribute('data-filename').toLowerCase();
         const machine = item.getAttribute('data-machine').toLowerCase();
         const core = item.getAttribute('data-core').toLowerCase();
         const folder = item.getAttribute('data-folder').toLowerCase();
+        const hole = item.getAttribute('data-hole').toLowerCase();
+        const batch = item.getAttribute('data-batch').toLowerCase();
+        const sample = item.getAttribute('data-sample').toLowerCase();
         
-        if (filename.includes(searchTerm) || machine.includes(searchTerm) || core.includes(searchTerm) || folder.includes(searchTerm)) {
+        if (filename.includes(searchTerm) || machine.includes(searchTerm) || 
+            core.includes(searchTerm) || folder.includes(searchTerm) || 
+            hole.includes(searchTerm) || batch.includes(searchTerm) || 
+            sample.includes(searchTerm)) {
             item.style.display = '';
             visibleCount++;
         } else {
             item.style.display = 'none';
+        }
+    });
+    
+    // Hide hole sections that have no visible images
+    holeSections.forEach(section => {
+        const visibleImages = section.querySelectorAll('.image-item[style=""]');
+        if (visibleImages.length === 0) {
+            section.style.display = 'none';
+        } else {
+            section.style.display = '';
         }
     });
     

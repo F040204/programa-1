@@ -174,6 +174,7 @@ class SMBDataRetriever:
     def scan_for_png_images(self):
         """
         Escanear el servidor SMB en busca de archivos PNG de forma recursiva
+        Filtra solo imágenes dentro de carpetas batch-xxx.xx/sample-N
         
         Returns:
             Lista de diccionarios con información de archivos PNG encontrados
@@ -186,13 +187,17 @@ class SMBDataRetriever:
             
             # Escanear recursivamente desde la raíz
             png_files = self._scan_directory_recursive('/', png_files)
+            
+            # Filtrar solo imágenes que están en batch-xxx.xx/sample-N
+            filtered_files = self._filter_batch_sample_images(png_files)
         
         except Exception as e:
             print(f"Error escaneando servidor SMB para PNG: {str(e)}")
+            filtered_files = []
         finally:
             self.disconnect()
         
-        return png_files
+        return filtered_files
     
     def _scan_directory_recursive(self, path, png_files):
         """
@@ -237,7 +242,8 @@ class SMBDataRetriever:
                         'file_size': item.file_size,
                         'create_time': datetime.fromtimestamp(item.create_time).isoformat(),
                         'last_write_time': datetime.fromtimestamp(item.last_write_time).isoformat(),
-                        'folder_path': '/'.join(path_parts[:-1]) if len(path_parts) > 1 else '/'
+                        'folder_path': '/'.join(path_parts[:-1]) if len(path_parts) > 1 else '/',
+                        'path_parts': path_parts
                     }
                     
                     # Agregar información de organización jerárquica
@@ -254,6 +260,61 @@ class SMBDataRetriever:
             print(f"Error escaneando directorio {path}: {str(e)}")
         
         return png_files
+    
+    def _filter_batch_sample_images(self, png_files):
+        """
+        Filtrar imágenes que están dentro de carpetas batch-xxx.xx/sample-N
+        
+        Args:
+            png_files: Lista de diccionarios con información de PNG
+            
+        Returns:
+            Lista filtrada y enriquecida con información de batch y sample
+        """
+        import re
+        filtered = []
+        
+        # Patrón para detectar batch-xxx.xx (números con punto decimal opcional)
+        batch_pattern = re.compile(r'batch-(\d+(?:\.\d+)?)', re.IGNORECASE)
+        # Patrón para detectar sample-N (donde N es 1, 2, 3, o 4)
+        sample_pattern = re.compile(r'sample-([1-4])', re.IGNORECASE)
+        
+        for png in png_files:
+            path_parts = png.get('path_parts', [])
+            
+            # Buscar batch-xxx.xx y sample-N en la ruta
+            batch_value = None
+            sample_value = None
+            hole_name = None  # El folder padre antes de batch
+            
+            for i, part in enumerate(path_parts):
+                batch_match = batch_pattern.search(part)
+                if batch_match:
+                    batch_value = batch_match.group(1)
+                    # El folder anterior al batch es el "hole" o core
+                    if i > 0:
+                        hole_name = path_parts[i - 1]
+                
+                sample_match = sample_pattern.search(part)
+                if sample_match:
+                    sample_value = sample_match.group(1)
+            
+            # Solo incluir si tiene tanto batch como sample
+            if batch_value and sample_value:
+                png['batch'] = batch_value
+                png['sample'] = sample_value
+                png['hole_name'] = hole_name or png.get('core_id', 'Unknown')
+                png['display_name'] = f"batch-{batch_value} sample {sample_value}"
+                filtered.append(png)
+        
+        # Ordenar por hole_name, batch, sample
+        filtered.sort(key=lambda x: (
+            x.get('hole_name', ''),
+            float(x.get('batch', '0')),
+            int(x.get('sample', '0'))
+        ))
+        
+        return filtered
     
     def get_image_file(self, file_path):
         """
