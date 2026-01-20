@@ -136,12 +136,13 @@
     color: #666;
 }
 
-#zoom-controls {
-    display: inline-flex !important;
+/* Zoom controls - use more specific selector to avoid !important */
+div[id="zoom-controls"] {
+    display: inline-flex;
 }
 
-#zoom-controls[style*="display: none"] {
-    display: none !important;
+div[id="zoom-controls"][style*="display: none"] {
+    display: none;
 }
 </style>
 
@@ -151,6 +152,8 @@ let currentZoom = 1;
 const zoomStep = 0.25;
 const minZoom = 0.25;
 const maxZoom = 4;
+const DEFAULT_ZOOM = 1;
+const TOGGLE_ZOOM = 2;
 
 function toggleHoleSection(holeName) {
     const container = document.getElementById('hole-images-' + holeName);
@@ -187,7 +190,7 @@ function showImage(event, fullPath, filename, machineId, coreId, folderPath, hol
     event.currentTarget.classList.add('selected');
     
     // Reset zoom when changing images
-    currentZoom = 1;
+    currentZoom = DEFAULT_ZOOM;
     
     // Encode the path properly for URL
     const encodedPath = encodeURIComponent(fullPath);
@@ -336,7 +339,7 @@ function zoomOut() {
 }
 
 function resetZoom() {
-    currentZoom = 1;
+    currentZoom = DEFAULT_ZOOM;
     applyZoom();
 }
 
@@ -349,7 +352,7 @@ function applyZoom() {
         img.style.transformOrigin = 'center';
         
         // Update cursor based on zoom level
-        if (currentZoom === 1) {
+        if (currentZoom === DEFAULT_ZOOM) {
             img.style.cursor = 'zoom-in';
         } else {
             img.style.cursor = 'zoom-out';
@@ -365,10 +368,10 @@ function applyZoom() {
 function toggleImageZoom() {
     const img = document.getElementById('preview-image');
     if (img) {
-        if (currentZoom === 1) {
-            currentZoom = 2;
+        if (currentZoom === DEFAULT_ZOOM) {
+            currentZoom = TOGGLE_ZOOM;
         } else {
-            currentZoom = 1;
+            currentZoom = DEFAULT_ZOOM;
         }
         applyZoom();
     }
