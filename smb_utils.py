@@ -3,6 +3,7 @@ from datetime import datetime
 import tempfile
 import os
 import io
+import re
 
 
 class SMBDataRetriever:
@@ -271,7 +272,6 @@ class SMBDataRetriever:
         Returns:
             Lista filtrada y enriquecida con información de batch y sample
         """
-        import re
         filtered = []
         
         # Patrón para detectar batch-xxx.xx (números con punto decimal opcional)
@@ -308,11 +308,20 @@ class SMBDataRetriever:
                 filtered.append(png)
         
         # Ordenar por hole_name, batch, sample
-        filtered.sort(key=lambda x: (
-            x.get('hole_name', ''),
-            float(x.get('batch', '0')),
-            int(x.get('sample', '0'))
-        ))
+        def sort_key(x):
+            try:
+                batch_num = float(x.get('batch', '0'))
+            except (ValueError, TypeError):
+                batch_num = 0.0
+            
+            try:
+                sample_num = int(x.get('sample', '0'))
+            except (ValueError, TypeError):
+                sample_num = 0
+            
+            return (x.get('hole_name', ''), batch_num, sample_num)
+        
+        filtered.sort(key=sort_key)
         
         return filtered
     

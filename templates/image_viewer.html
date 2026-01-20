@@ -232,7 +232,7 @@ function filterImages() {
     
     // Hide hole sections that have no visible images
     holeSections.forEach(section => {
-        const visibleImages = section.querySelectorAll('.image-item[style=""]');
+        const visibleImages = section.querySelectorAll('.image-item:not([style*="display: none"])');
         if (visibleImages.length === 0) {
             section.style.display = 'none';
         } else {
