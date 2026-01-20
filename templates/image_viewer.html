@@ -135,9 +135,23 @@
     font-weight: bold;
     color: #666;
 }
+
+#zoom-controls {
+    display: inline-flex !important;
+}
+
+#zoom-controls[style*="display: none"] {
+    display: none !important;
+}
 </style>
 
 <script>
+// Zoom functionality variables (declare at the top)
+let currentZoom = 1;
+const zoomStep = 0.25;
+const minZoom = 0.25;
+const maxZoom = 4;
+
 function toggleHoleSection(holeName) {
     const container = document.getElementById('hole-images-' + holeName);
     const icon = document.getElementById('toggle-icon-' + holeName);
@@ -149,6 +163,18 @@ function toggleHoleSection(holeName) {
         container.style.display = 'none';
         icon.textContent = '▶';
     }
+}
+
+function onImageLoad() {
+    document.getElementById('loading-indicator').style.display = 'none';
+    document.getElementById('preview-image').style.display = 'block';
+    document.getElementById('zoom-controls').style.display = 'inline-flex';
+    document.getElementById('image-container').style.display = 'block';
+}
+
+function onImageError() {
+    document.getElementById('preview-image').style.display = 'none';
+    document.getElementById('loading-indicator').innerHTML = '<div style="color: red; padding: 20px;"><strong>Error:</strong> No se pudo cargar la imagen. Verifique la conexión SMB.</div>';
 }
 
 function showImage(event, fullPath, filename, machineId, coreId, folderPath, holeName, batch, sample) {
@@ -193,7 +219,7 @@ function showImage(event, fullPath, filename, machineId, coreId, folderPath, hol
             </div>
         </div>
         <div style="text-align: center;">
-            <div id="zoom-controls" style="display: none; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; display: inline-flex; gap: 10px; align-items: center;">
+            <div id="zoom-controls" style="display: none; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; gap: 10px; align-items: center;">
                 <button onclick="zoomIn()" class="btn btn-sm btn-secondary" title="Zoom In">
                     <span style="font-size: 1.2em;">🔍+</span>
                 </button>
@@ -214,8 +240,8 @@ function showImage(event, fullPath, filename, machineId, coreId, folderPath, hol
                      alt="${filename}"
                      style="display: none; transition: transform 0.3s ease; cursor: zoom-in;"
                      onclick="toggleImageZoom()"
-                     onload="document.getElementById('loading-indicator').style.display='none'; this.style.display='block'; document.getElementById('zoom-controls').style.display='inline-flex'; document.getElementById('image-container').style.display='block';"
-                     onerror="this.style.display='none'; document.getElementById('loading-indicator').innerHTML='<div style=\\'color: red; padding: 20px;\\'><strong>Error:</strong> No se pudo cargar la imagen. Verifique la conexión SMB.</div>';">
+                     onload="onImageLoad()"
+                     onerror="onImageError()">
             </div>
         </div>
     `;
@@ -294,12 +320,7 @@ function refreshImages(event) {
     });
 }
 
-// Zoom functionality
-let currentZoom = 1;
-const zoomStep = 0.25;
-const minZoom = 0.25;
-const maxZoom = 4;
-
+// Zoom functionality functions
 function zoomIn() {
     if (currentZoom < maxZoom) {
         currentZoom += zoomStep;
