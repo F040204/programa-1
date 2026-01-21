@@ -12,7 +12,7 @@ Features:
     - Tests SMB server connectivity
     - Verifies credentials and authentication
     - Lists folders in the configured base path
-    - Scans for PNG files in the structure
+    - Scans for JPG files in the structure
     - Provides detailed error messages for troubleshooting
 """
 

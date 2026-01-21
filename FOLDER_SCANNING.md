@@ -1,7 +1,7 @@
 # SMB Folder Scanning - Technical Documentation
 
 ## Overview
-This document explains how the application scans folders on the SMB server to ensure all PNG images are discovered.
+This document explains how the application scans folders on the SMB server to ensure all JPG images are discovered.
 
 ## Scanning Mechanism
 
@@ -17,12 +17,12 @@ SMB_BASE_SCAN_PATH=/incoming/Orexplore
 ```
 
 ### 2. Recursive Scanning Algorithm
-The `scan_for_png_images()` function in `smb_utils.py` performs a depth-first recursive scan:
+The `scan_for_jpg_images()` function in `smb_utils.py` performs a depth-first recursive scan:
 
 1. **Starts** at the configured base path (default: `/`)
 2. **Lists** all items in the current directory
 3. **For each directory found**: Recursively scans that directory
-4. **For each PNG file found**: Adds it to the results with full metadata
+4. **For each JPG file found**: Adds it to the results with full metadata
 5. **Continues** until all directories have been explored
 
 ### 3. Path Normalization
