@@ -176,6 +176,23 @@ class SMBDataRetriever:
         
         return 0.0
     
+    def _normalize_path(self, path):
+        """
+        Normalize a path to ensure consistency
+        
+        Args:
+            path: Path string to normalize
+            
+        Returns:
+            Normalized path with consistent format
+        """
+        # Ensure path starts with / and doesn't end with / (unless root)
+        if not path.startswith('/'):
+            path = '/' + path
+        if path != '/' and path.endswith('/'):
+            path = path[:-1]
+        return path
+    
     def scan_for_png_images(self):
         """
         Escanear el servidor SMB en busca de archivos PNG de forma recursiva
@@ -194,11 +211,8 @@ class SMBDataRetriever:
             # Get base scan path from configuration
             base_path = self.config.get('SMB_BASE_SCAN_PATH', '/')
             
-            # Normalize base path - ensure it starts with / and doesn't end with / (unless root)
-            if not base_path.startswith('/'):
-                base_path = '/' + base_path
-            if base_path != '/' and base_path.endswith('/'):
-                base_path = base_path[:-1]
+            # Normalize base path
+            base_path = self._normalize_path(base_path)
             
             logger.info(f"Starting recursive PNG scan from base path: {base_path}")
             
