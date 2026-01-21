@@ -25,6 +25,10 @@ class Config:
     SMB_PASSWORD = os.environ.get('SMB_PASSWORD', '')
     SMB_DOMAIN = os.environ.get('SMB_DOMAIN', 'WORKGROUP')
     
+    # Base path for scanning (within the SMB share)
+    # Set to '/' to scan from root, or specify a subfolder like 'incoming/Orexplore'
+    SMB_BASE_SCAN_PATH = os.environ.get('SMB_BASE_SCAN_PATH', '/')
+    
     # Configuración de la aplicación
     OPERATIONS_PER_PAGE = 20
     BATCHES_PER_PAGE = 30

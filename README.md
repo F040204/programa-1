@@ -90,6 +90,11 @@ SMB_SHARE_NAME=shared_folder
 SMB_USERNAME=usuario
 SMB_PASSWORD=contraseña
 SMB_DOMAIN=WORKGROUP
+
+# Ruta base para escaneo (opcional, por defecto '/')
+# Para escanear solo dentro de una carpeta específica:
+# SMB_BASE_SCAN_PATH=incoming/Orexplore
+SMB_BASE_SCAN_PATH=/
 ```
 
 5. Inicializar la base de datos:
@@ -198,7 +203,14 @@ Para habilitar la integración con servidor SMB:
 1. Configurar las variables de entorno en `.env`
 2. Asegurar conectividad de red con el servidor
 3. Verificar permisos de lectura en el compartido
-4. El sistema escanea recursivamente toda la estructura de carpetas en busca de archivos PNG. Soporta cualquier profundidad y organización de directorios:
+4. **(Opcional)** Configurar `SMB_BASE_SCAN_PATH` para escanear desde una carpeta específica dentro del share. Por defecto (`/`), escanea desde la raíz del share.
+   
+   Ejemplos de configuración:
+   - `SMB_BASE_SCAN_PATH=/` - Escanea desde la raíz del share (por defecto)
+   - `SMB_BASE_SCAN_PATH=/incoming/Orexplore` - Escanea solo dentro de la carpeta incoming/Orexplore
+   - `SMB_BASE_SCAN_PATH=/data/production` - Escanea solo dentro de data/production
+
+5. El sistema escanea recursivamente toda la estructura de carpetas en busca de archivos PNG. Soporta cualquier profundidad y organización de directorios:
    ```
    /share_name/
    ├── Orexplore/
