@@ -149,7 +149,7 @@ If the share cannot be accessed:
 If no PNG files are detected:
 - Verify PNG files exist in the configured path
 - Check the `SMB_BASE_SCAN_PATH` configuration
-- Ensure files have `.png` extension (case-insensitive)
+- Ensure files have `.jpg` extension (case-insensitive)
 
 ## Exit Codes
 

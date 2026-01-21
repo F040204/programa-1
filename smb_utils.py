@@ -193,20 +193,20 @@ class SMBDataRetriever:
             path = path[:-1]
         return path
     
-    def scan_for_png_images(self):
+    def scan_for_jpg_images(self):
         """
-        Escanear el servidor SMB en busca de archivos PNG de forma recursiva
+        Escanear el servidor SMB en busca de archivos JPG de forma recursiva
         Filtra solo imágenes dentro de carpetas batch-xxx.xx/sample-N
         
         Returns:
-            Lista de diccionarios con información de archivos PNG encontrados
+            Lista de diccionarios con información de archivos JPG encontrados
         """
-        png_files = []
+        jpg_files = []
         
         try:
             if not self.connect():
                 logger.error("Failed to connect to SMB server")
-                return png_files
+                return jpg_files
             
             # Get base scan path from configuration
             base_path = self.config.get('SMB_BASE_SCAN_PATH', '/')
@@ -214,36 +214,36 @@ class SMBDataRetriever:
             # Normalize base path
             base_path = self._normalize_path(base_path)
             
-            logger.info(f"Starting recursive PNG scan from base path: {base_path}")
+            logger.info(f"Starting recursive JPG scan from base path: {base_path}")
             
             # Escanear recursivamente desde la ruta base configurada
-            png_files = self._scan_directory_recursive(base_path, png_files)
+            jpg_files = self._scan_directory_recursive(base_path, jpg_files)
             
-            logger.info(f"Scan complete. Found {len(png_files)} PNG files")
+            logger.info(f"Scan complete. Found {len(jpg_files)} JPG files")
             
             # Filtrar solo imágenes que están en batch-xxx.xx/sample-N
-            filtered_files = self._filter_batch_sample_images(png_files)
+            filtered_files = self._filter_batch_sample_images(jpg_files)
             
-            logger.info(f"After filtering: {len(filtered_files)} PNG files")
+            logger.info(f"After filtering: {len(filtered_files)} JPG files")
         
         except Exception as e:
-            logger.error(f"Error scanning SMB server for PNG: {str(e)}")
+            logger.error(f"Error scanning SMB server for JPG: {str(e)}")
             filtered_files = []
         finally:
             self.disconnect()
         
         return filtered_files
     
-    def _scan_directory_recursive(self, path, png_files):
+    def _scan_directory_recursive(self, path, jpg_files):
         """
-        Escanear un directorio de forma recursiva en busca de archivos PNG
+        Escanear un directorio de forma recursiva en busca de archivos JPG
         
         Args:
             path: Ruta del directorio a escanear
-            png_files: Lista acumulativa de archivos PNG encontrados
+            jpg_files: Lista acumulativa de archivos JPG encontrados
             
         Returns:
-            Lista actualizada de archivos PNG
+            Lista actualizada de archivos JPG
         """
         try:
             logger.debug(f"Scanning directory: {path}")
@@ -271,14 +271,14 @@ class SMBDataRetriever:
                 if item.isDirectory:
                     dir_count += 1
                     # Si es un directorio, escanear recursivamente
-                    png_files = self._scan_directory_recursive(item_path, png_files)
-                elif item.filename.lower().endswith('.png'):
+                    jpg_files = self._scan_directory_recursive(item_path, jpg_files)
+                elif item.filename.lower().endswith('.jpg'):
                     file_count += 1
-                    # Si es un archivo PNG, agregarlo a la lista
+                    # Si es un archivo JPG, agregarlo a la lista
                     # Extraer información de la ruta para organización
                     path_parts = item_path.strip('/').split('/')
                     
-                    png_info = {
+                    jpg_info = {
                         'filename': item.filename,
                         'full_path': item_path,
                         'file_size': item.file_size,
@@ -290,29 +290,29 @@ class SMBDataRetriever:
                     
                     # Agregar información de organización jerárquica
                     if len(path_parts) >= 2:
-                        png_info['machine_id'] = path_parts[0]
-                        png_info['core_id'] = path_parts[1]
+                        jpg_info['machine_id'] = path_parts[0]
+                        jpg_info['core_id'] = path_parts[1]
                     else:
-                        png_info['machine_id'] = path_parts[0] if path_parts else ''
-                        png_info['core_id'] = ''
+                        jpg_info['machine_id'] = path_parts[0] if path_parts else ''
+                        jpg_info['core_id'] = ''
                     
-                    png_files.append(png_info)
+                    jpg_files.append(jpg_info)
             
             if dir_count > 0 or file_count > 0:
-                logger.debug(f"  {path}: found {dir_count} subdirectories, {file_count} PNG files")
+                logger.debug(f"  {path}: found {dir_count} subdirectories, {file_count} JPG files")
         
         except Exception as e:
             logger.warning(f"Error scanning directory {path}: {str(e)}")
         
-        return png_files
+        return jpg_files
     
-    def _filter_batch_sample_images(self, png_files):
+    def _filter_batch_sample_images(self, jpg_files):
         """
-        Filtrar y enriquecer imágenes PNG con información de batch y sample
-        Ahora incluye PNGs de cualquier carpeta, no solo batch-xxx.xx/sample-N
+        Filtrar y enriquecer imágenes JPG con información de batch y sample
+        Ahora incluye JPGs de cualquier carpeta, no solo batch-xxx.xx/sample-N
         
         Args:
-            png_files: Lista de diccionarios con información de PNG
+            jpg_files: Lista de diccionarios con información de JPG
             
         Returns:
             Lista filtrada y enriquecida con información de batch y sample
@@ -324,8 +324,8 @@ class SMBDataRetriever:
         # Patrón para detectar sample-N (cualquier número, no solo 1-4)
         sample_pattern = re.compile(r'sample-(\d+)', re.IGNORECASE)
         
-        for png in png_files:
-            path_parts = png.get('path_parts', [])
+        for jpg in jpg_files:
+            path_parts = jpg.get('path_parts', [])
             
             # Buscar batch-xxx.xx y sample-N en la ruta
             batch_value = None
@@ -344,37 +344,37 @@ class SMBDataRetriever:
                 if sample_match:
                     sample_value = sample_match.group(1)
             
-            # Incluir el PNG independientemente de si tiene batch o sample
+            # Incluir el JPG independientemente de si tiene batch o sample
             # Construir display_name según lo que tengamos disponible
             if batch_value and sample_value:
                 # Caso ideal: tiene batch y sample
-                png['batch'] = batch_value
-                png['sample'] = sample_value
-                png['hole_name'] = hole_name or png.get('core_id', 'Unknown')
-                png['display_name'] = f"batch-{batch_value} sample {sample_value}"
+                jpg['batch'] = batch_value
+                jpg['sample'] = sample_value
+                jpg['hole_name'] = hole_name or jpg.get('core_id', 'Unknown')
+                jpg['display_name'] = f"batch-{batch_value} sample {sample_value}"
             elif batch_value:
                 # Solo tiene batch
-                png['batch'] = batch_value
-                png['sample'] = 'N/A'
-                png['hole_name'] = hole_name or png.get('core_id', 'Unknown')
-                png['display_name'] = f"batch-{batch_value}"
+                jpg['batch'] = batch_value
+                jpg['sample'] = 'N/A'
+                jpg['hole_name'] = hole_name or jpg.get('core_id', 'Unknown')
+                jpg['display_name'] = f"batch-{batch_value}"
             elif sample_value:
                 # Solo tiene sample
-                png['batch'] = 'N/A'
-                png['sample'] = sample_value
-                png['hole_name'] = png.get('core_id', 'Unknown')
-                png['display_name'] = f"sample {sample_value}"
+                jpg['batch'] = 'N/A'
+                jpg['sample'] = sample_value
+                jpg['hole_name'] = jpg.get('core_id', 'Unknown')
+                jpg['display_name'] = f"sample {sample_value}"
             else:
                 # No tiene ni batch ni sample, usar información de carpeta
-                png['batch'] = 'N/A'
-                png['sample'] = 'N/A'
-                png['hole_name'] = png.get('core_id', 'Unknown')
+                jpg['batch'] = 'N/A'
+                jpg['sample'] = 'N/A'
+                jpg['hole_name'] = jpg.get('core_id', 'Unknown')
                 # Usar el nombre de la carpeta padre como display_name
                 parent_folder = path_parts[-2] if len(path_parts) >= 2 else 'Root'
-                filename = png.get('filename', 'Unknown')
-                png['display_name'] = f"{parent_folder}/{filename}"
+                filename = jpg.get('filename', 'Unknown')
+                jpg['display_name'] = f"{parent_folder}/{filename}"
             
-            filtered.append(png)
+            filtered.append(jpg)
         
         # Ordenar por hole_name, batch, sample
         def sort_key(x):

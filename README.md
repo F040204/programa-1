@@ -100,7 +100,7 @@ SMB_DOMAIN=WORKGROUP
 
 # Ruta base para escaneo (opcional, por defecto '/')
 # Para escanear solo dentro de una carpeta específica:
-# .png files should be two folders deep after pond/incoming/Orexplore/
+# .jpg files should be two folders deep after pond/incoming/Orexplore/
 SMB_BASE_SCAN_PATH=/incoming/Orexplore
 ```
 
@@ -217,25 +217,25 @@ Para habilitar la integración con servidor SMB:
    - `SMB_BASE_SCAN_PATH=/incoming/Orexplore` - Escanea solo dentro de la carpeta incoming/Orexplore
    - `SMB_BASE_SCAN_PATH=/data/production` - Escanea solo dentro de data/production
 
-5. El sistema escanea recursivamente toda la estructura de carpetas en busca de archivos PNG. Soporta cualquier profundidad y organización de directorios:
+5. El sistema escanea recursivamente toda la estructura de carpetas en busca de archivos JPG. Soporta cualquier profundidad y organización de directorios:
    ```
    /share_name/
    ├── Orexplore/
    │   ├── Oux-Plore_Test/
    │   │   ├── Batch-1/
-   │   │   │   ├── image1.png
-   │   │   │   └── image2.png
+   │   │   │   ├── image1.jpg
+   │   │   │   └── image2.jpg
    │   │   └── Batch-2/
-   │   │       └── scan.png
+   │   │       └── scan.jpg
    │   └── SampleA/
    │       └── batch-1/
-   │           └── test.png
+   │           └── test.jpg
    └── MACHINE-02/
        └── CORE-003/
-           └── image4.png
+           └── image4.jpg
    ```
    
-   El escáner recursivo encuentra automáticamente todos los archivos PNG sin importar la estructura de carpetas.
+   El escáner recursivo encuentra automáticamente todos los archivos JPG sin importar la estructura de carpetas.
 
 ## Desarrollo
 

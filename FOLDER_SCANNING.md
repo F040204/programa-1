@@ -68,7 +68,7 @@ To verify all folders are being scanned:
 2. **Verify base path**: Ensure `SMB_BASE_SCAN_PATH` points to the correct folder
 3. **Check permissions**: User must have read access to all folders
 4. **Review logs**: Look for warning/error messages about specific paths
-5. **Validate file extensions**: Only `.png` files (case-insensitive) are detected
+5. **Validate file extensions**: Only `.jpg` files (case-insensitive) are detected
 
 ### Common Configuration Issues:
 - ❌ **Wrong share name**: `SMB_SHARE_NAME` must match the actual SMB share
@@ -86,11 +86,11 @@ To verify all folders are being scanned:
 │       ├── Machine-01/
 │       │   └── batch-1.0/
 │       │       └── sample-1/
-│       │           └── image.png  ← Found
+│       │           └── image.jpg  ← Found
 │       └── Machine-02/
-│           └── test.png           ← Found
+│           └── test.jpg           ← Found
 └── archive/
-    └── old_image.png              ← Found
+    └── old_image.jpg              ← Found
 ```
 Configuration: `SMB_BASE_SCAN_PATH=/`
 
@@ -100,11 +100,11 @@ Configuration: `SMB_BASE_SCAN_PATH=/`
 ├── incoming/
 │   └── Orexplore/
 │       ├── Machine-01/
-│       │   └── image.png         ← Found
+│       │   └── image.jpg         ← Found
 │       └── Machine-02/
-│           └── test.png          ← Found
+│           └── test.jpg          ← Found
 └── archive/
-    └── old_image.png             ← NOT scanned
+    └── old_image.jpg             ← NOT scanned
 ```
 Configuration: `SMB_BASE_SCAN_PATH=/incoming/Orexplore`
 
