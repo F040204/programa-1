@@ -113,9 +113,18 @@ python -c "from app import app, db; app.app_context().push(); db.create_all()"
 
 ### Iniciar la aplicación
 
+#### Modo Desarrollo
 ```bash
 python app.py
 ```
+
+#### Modo Producción (systemd service)
+Para despliegue en producción, se recomienda usar el servicio systemd incluido:
+```bash
+sudo systemctl start programa-1
+```
+
+Ver [SYSTEMD_SERVICE.md](SYSTEMD_SERVICE.md) para instrucciones completas de instalación del servicio.
 
 La aplicación estará disponible en: `http://localhost:5000`
 

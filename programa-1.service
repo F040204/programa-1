@@ -1,0 +1,27 @@
+[Unit]
+Description=SMB Image Viewer - Flask Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/programa-1
+Environment="PATH=/opt/programa-1/venv/bin"
+EnvironmentFile=/opt/programa-1/.env
+ExecStartPre=/bin/bash -c 'cd /opt/programa-1 && /opt/programa-1/venv/bin/python -c "from app import init_db; init_db()"'
+ExecStart=/opt/programa-1/venv/bin/gunicorn --workers 4 --bind 0.0.0.0:5000 --timeout 120 --access-logfile /var/log/programa-1/access.log --error-logfile /var/log/programa-1/error.log app:app
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=programa-1
+
+[Install]
+WantedBy=multi-user.target
