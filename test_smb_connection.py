@@ -248,8 +248,8 @@ def test_smb_connection():
             # Show summary statistics
             print_info("\nSummary by machine/folder:")
             machines = {}
-            for png in png_files:
-                machine = png.get('machine_id', 'Unknown')
+            for jpg in jpg_files:
+                machine = jpg.get('machine_id', 'Unknown')
                 if machine not in machines:
                     machines[machine] = 0
                 machines[machine] += 1
