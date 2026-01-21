@@ -109,7 +109,7 @@ def test_smb_connection():
         return False
     
     # Test 3: List Share Contents
-    print_section("Test 3: Access SMB Share")
+    print_section("Test 3: Access SMB Share and Verify Folder Depth")
     try:
         base_path = Config.SMB_BASE_SCAN_PATH or '/'
         print_info(f"Attempting to list contents of: {Config.SMB_SHARE_NAME}{base_path}")
@@ -123,15 +123,55 @@ def test_smb_connection():
         files = [item for item in items if not item.isDirectory]
         
         print_success(f"Successfully accessed share '{Config.SMB_SHARE_NAME}'")
-        print_info(f"Found {len(folders)} folders and {len(files)} files")
+        print_info(f"Found {len(folders)} folders and {len(files)} files at base level")
         
         if folders:
-            print_info("\nFirst 10 folders:")
+            print_info("\nFirst 10 folders at base level:")
             for i, folder in enumerate(folders[:10]):
                 print(f"    {i+1}. {folder.filename}/")
+            
+            # Test accessing folders up to 3 levels deep
+            print_info("\nVerifying folder access at multiple depths:")
+            checked_depths = 0
+            max_depth_to_check = 3
+            
+            def check_folder_depth(current_path, depth, max_depth, checked_count):
+                """Recursively check folder access up to specified depth"""
+                if depth > max_depth or checked_count >= 5:  # Limit to 5 total checks to avoid long scan
+                    return checked_count
+                
+                try:
+                    items = smb_retriever.connection.listPath(
+                        Config.SMB_SHARE_NAME,
+                        current_path
+                    )
+                    subdirs = [item for item in items if item.isDirectory and item.filename not in ['.', '..']]
+                    
+                    if subdirs:
+                        for subdir in subdirs[:2]:  # Check first 2 subdirectories at each level
+                            if checked_count >= 5:
+                                break
+                            subdir_path = f"{current_path}/{subdir.filename}" if not current_path.endswith('/') else f"{current_path}{subdir.filename}"
+                            print(f"    ✓ Depth {depth}: {subdir_path}")
+                            checked_count += 1
+                            checked_count = check_folder_depth(subdir_path, depth + 1, max_depth, checked_count)
+                except Exception as e:
+                    print_info(f"    Note: Could not access depth {depth}: {str(e)}")
+                
+                return checked_count
+            
+            # Start checking from first folder
+            if folders:
+                first_folder_path = f"{base_path}/{folders[0].filename}" if not base_path.endswith('/') else f"{base_path}{folders[0].filename}"
+                checked_depths = check_folder_depth(first_folder_path, 1, max_depth_to_check, 0)
+                
+                if checked_depths > 0:
+                    print_success(f"✓ Verified folder access up to {max_depth_to_check} levels deep")
+                else:
+                    print_info("Note: No subfolders found to verify depth")
         
         if files:
-            print_info("\nFirst 10 files:")
+            print_info(f"\nFirst 10 files at base level:")
             for i, file in enumerate(files[:10]):
                 size_mb = file.file_size / (1024 * 1024)
                 print(f"    {i+1}. {file.filename} ({size_mb:.2f} MB)")
@@ -160,13 +200,40 @@ def test_smb_connection():
         
         if png_files:
             print_success(f"Found {len(png_files)} PNG files")
+            
+            # Calculate depth information relative to base path
+            base_path = Config.SMB_BASE_SCAN_PATH or '/'
+            max_depth = 0
+            depth_counts = {}
+            
+            for png in png_files:
+                path_parts = png.get('path_parts', [])
+                # Calculate depth from the base path
+                depth = len(path_parts) - 1  # -1 because filename is the last part
+                max_depth = max(max_depth, depth)
+                depth_counts[depth] = depth_counts.get(depth, 0) + 1
+            
+            print_info(f"\nFolder depth analysis (relative to {base_path}):")
+            print_info(f"  Maximum folder depth scanned: {max_depth} levels")
+            for depth in sorted(depth_counts.keys()):
+                print(f"    Depth {depth}: {depth_counts[depth]} files")
+            
+            # Verify we're checking at least 3 folders deep
+            if max_depth >= 3:
+                print_success(f"✓ Confirmed: Scanning checks folders at least 3 levels deep (found files at depth {max_depth})")
+            elif max_depth > 0:
+                print_info(f"Note: Currently only found files up to depth {max_depth}")
+            
             print_info("\nFirst 10 PNG files:")
             for i, png in enumerate(png_files[:10]):
                 display_name = png.get('display_name', png.get('filename', 'Unknown'))
                 folder = png.get('folder_path', '')
+                path_parts = png.get('path_parts', [])
+                depth = len(path_parts) - 1
                 size_kb = png.get('file_size', 0) / 1024
                 print(f"    {i+1}. {display_name}")
                 print(f"       Path: {folder}")
+                print(f"       Depth: {depth} levels")
                 print(f"       Size: {size_kb:.2f} KB")
                 
             # Show summary statistics

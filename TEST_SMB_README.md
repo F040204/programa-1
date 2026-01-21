@@ -41,8 +41,8 @@ The script performs 5 comprehensive tests:
 
 1. **Initialize SMB Data Retriever**: Validates that the SMB utility can be instantiated with the configuration
 2. **Connect to SMB Server**: Tests network connectivity and authentication to the SMB server
-3. **Access SMB Share**: Verifies access to the configured share and lists folders/files
-4. **Scan for PNG Images**: Performs a recursive scan for PNG files in the configured path
+3. **Access SMB Share and Verify Folder Depth**: Verifies access to the configured share, lists folders/files, and explicitly checks folder access up to 3 levels deep from the base path
+4. **Scan for PNG Images**: Performs a recursive scan for PNG files in the configured path, with depth analysis showing how many levels deep the scan reaches
 5. **Test Image Retrieval**: Attempts to retrieve an actual image file to verify read permissions
 
 ### Output
@@ -75,10 +75,27 @@ Test started at: 2026-01-21 14:45:00
 --- Test 2: Connect to SMB Server ---
 ✓ Successfully connected to SMB server at 172.16.11.107
 
---- Test 3: Access SMB Share ---
+--- Test 3: Access SMB Share and Verify Folder Depth ---
 ℹ Attempting to list contents of: pond/incoming/Orexplore
 ✓ Successfully accessed share 'pond'
-ℹ Found 5 folders and 12 files
+ℹ Found 5 folders and 12 files at base level
+
+Verifying folder access at multiple depths:
+    ✓ Depth 1: /incoming/Orexplore/Machine-01
+    ✓ Depth 2: /incoming/Orexplore/Machine-01/batch-1.0
+    ✓ Depth 3: /incoming/Orexplore/Machine-01/batch-1.0/sample-1
+✓ Verified folder access up to 3 levels deep
+
+--- Test 4: Scan for PNG Images ---
+ℹ Starting recursive PNG scan...
+✓ Found 42 PNG files
+
+Folder depth analysis (relative to /incoming/Orexplore):
+  Maximum folder depth scanned: 3 levels
+    Depth 1: 5 files
+    Depth 2: 15 files
+    Depth 3: 22 files
+✓ Confirmed: Scanning checks folders at least 3 levels deep (found files at depth 3)
 ...
 ```
 
