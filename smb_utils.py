@@ -326,8 +326,9 @@ class SMBDataRetriever:
                 png['sample'] = 'N/A'
                 png['hole_name'] = png.get('core_id', 'Unknown')
                 # Usar el nombre de la carpeta padre como display_name
-                parent_folder = path_parts[-2] if len(path_parts) > 1 else 'Root'
-                png['display_name'] = f"{parent_folder}/{png.get('filename', '')}"
+                parent_folder = path_parts[-2] if len(path_parts) >= 2 else 'Root'
+                filename = png.get('filename', 'Unknown')
+                png['display_name'] = f"{parent_folder}/{filename}"
             
             filtered.append(png)
         
