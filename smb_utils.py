@@ -264,7 +264,8 @@ class SMBDataRetriever:
     
     def _filter_batch_sample_images(self, png_files):
         """
-        Filtrar imágenes que están dentro de carpetas batch-xxx.xx/sample-N
+        Filtrar y enriquecer imágenes PNG con información de batch y sample
+        Ahora incluye PNGs de cualquier carpeta, no solo batch-xxx.xx/sample-N
         
         Args:
             png_files: Lista de diccionarios con información de PNG
@@ -276,8 +277,8 @@ class SMBDataRetriever:
         
         # Patrón para detectar batch-xxx.xx (números con punto decimal opcional)
         batch_pattern = re.compile(r'batch-(\d+(?:\.\d+)?)', re.IGNORECASE)
-        # Patrón para detectar sample-N (donde N es 1, 2, 3, o 4)
-        sample_pattern = re.compile(r'sample-([1-4])', re.IGNORECASE)
+        # Patrón para detectar sample-N (cualquier número, no solo 1-4)
+        sample_pattern = re.compile(r'sample-(\d+)', re.IGNORECASE)
         
         for png in png_files:
             path_parts = png.get('path_parts', [])
@@ -299,25 +300,59 @@ class SMBDataRetriever:
                 if sample_match:
                     sample_value = sample_match.group(1)
             
-            # Solo incluir si tiene tanto batch como sample
+            # Incluir el PNG independientemente de si tiene batch o sample
+            # Construir display_name según lo que tengamos disponible
             if batch_value and sample_value:
+                # Caso ideal: tiene batch y sample
                 png['batch'] = batch_value
                 png['sample'] = sample_value
                 png['hole_name'] = hole_name or png.get('core_id', 'Unknown')
                 png['display_name'] = f"batch-{batch_value} sample {sample_value}"
-                filtered.append(png)
+            elif batch_value:
+                # Solo tiene batch
+                png['batch'] = batch_value
+                png['sample'] = 'N/A'
+                png['hole_name'] = hole_name or png.get('core_id', 'Unknown')
+                png['display_name'] = f"batch-{batch_value}"
+            elif sample_value:
+                # Solo tiene sample
+                png['batch'] = 'N/A'
+                png['sample'] = sample_value
+                png['hole_name'] = png.get('core_id', 'Unknown')
+                png['display_name'] = f"sample {sample_value}"
+            else:
+                # No tiene ni batch ni sample, usar información de carpeta
+                png['batch'] = 'N/A'
+                png['sample'] = 'N/A'
+                png['hole_name'] = png.get('core_id', 'Unknown')
+                # Usar el nombre de la carpeta padre como display_name
+                parent_folder = path_parts[-2] if len(path_parts) >= 2 else 'Root'
+                filename = png.get('filename', 'Unknown')
+                png['display_name'] = f"{parent_folder}/{filename}"
+            
+            filtered.append(png)
         
         # Ordenar por hole_name, batch, sample
         def sort_key(x):
-            try:
-                batch_num = float(x.get('batch', '0'))
-            except (ValueError, TypeError):
-                batch_num = 0.0
+            # Manejar batch que puede ser 'N/A'
+            batch_val = x.get('batch', 'N/A')
+            if batch_val == 'N/A':
+                batch_num = float('inf')  # Los N/A van al final
+            else:
+                try:
+                    batch_num = float(batch_val)
+                except (ValueError, TypeError):
+                    batch_num = float('inf')
             
-            try:
-                sample_num = int(x.get('sample', '0'))
-            except (ValueError, TypeError):
-                sample_num = 0
+            # Manejar sample que puede ser 'N/A'
+            sample_val = x.get('sample', 'N/A')
+            if sample_val == 'N/A':
+                sample_num = float('inf')  # Los N/A van al final
+            else:
+                try:
+                    sample_num = int(sample_val)
+                except (ValueError, TypeError):
+                    sample_num = float('inf')
             
             return (x.get('hole_name', ''), batch_num, sample_num)
         
