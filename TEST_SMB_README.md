@@ -10,7 +10,7 @@ This script helps verify that:
 - The SMB server is accessible from your network
 - Credentials are valid
 - The configured share and paths exist
-- PNG files can be scanned and retrieved
+- JPG files can be scanned and retrieved
 
 ## Prerequisites
 
@@ -42,7 +42,7 @@ The script performs 5 comprehensive tests:
 1. **Initialize SMB Data Retriever**: Validates that the SMB utility can be instantiated with the configuration
 2. **Connect to SMB Server**: Tests network connectivity and authentication to the SMB server
 3. **Access SMB Share and Verify Folder Depth**: Verifies access to the configured share, lists folders/files, and explicitly checks folder access up to 3 levels deep from the base path
-4. **Scan for PNG Images**: Performs a recursive scan for PNG files in the configured path, with depth analysis showing how many levels deep the scan reaches
+4. **Scan for JPG Images**: Performs a recursive scan for JPG files in the configured path, with depth analysis showing how many levels deep the scan reaches
 5. **Test Image Retrieval**: Attempts to retrieve an actual image file to verify read permissions
 
 ### Output
@@ -86,9 +86,9 @@ Verifying folder access at multiple depths:
     ✓ Depth 3: /incoming/Orexplore/Machine-01/batch-1.0/sample-1
 ✓ Verified folder access up to 3 levels deep
 
---- Test 4: Scan for PNG Images ---
-ℹ Starting recursive PNG scan...
-✓ Found 42 PNG files
+--- Test 4: Scan for JPG Images ---
+ℹ Starting recursive JPG scan...
+✓ Found 42 JPG files
 
 Folder depth analysis (relative to /incoming/Orexplore):
   Maximum folder depth scanned: 3 levels
@@ -144,12 +144,12 @@ If the share cannot be accessed:
 - Confirm the share exists on the server
 - Check user permissions for the share
 
-### No PNG Files Found
+### No JPG Files Found
 
-If no PNG files are detected:
-- Verify PNG files exist in the configured path
+If no JPG files are detected:
+- Verify JPG files exist in the configured path
 - Check the `SMB_BASE_SCAN_PATH` configuration
-- Ensure files have `.png` extension (case-insensitive)
+- Ensure files have `.jpg` extension (case-insensitive)
 
 ## Exit Codes
 

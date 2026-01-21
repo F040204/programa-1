@@ -158,15 +158,15 @@ def index():
 
 @app.route('/image-viewer')
 def image_viewer():
-    """Page to view PNG images from SMB folders"""
+    """Page to view JPG images from SMB folders"""
     # Try to get cached image list
-    image_list = smb_cache.get('png_image_list')
+    image_list = smb_cache.get('jpg_image_list')
     smb_connection_status = smb_cache.get('smb_status')
     
     if image_list is None:
         try:
             smb_retriever = SMBDataRetriever(app.config)
-            image_list = smb_retriever.scan_for_png_images()
+            image_list = smb_retriever.scan_for_jpg_images()
             smb_connection_status = {
                 'connected': True,
                 'images_found': len(image_list),
@@ -181,7 +181,7 @@ def image_viewer():
             }
         
         # Cache the data
-        smb_cache.set('png_image_list', image_list)
+        smb_cache.set('jpg_image_list', image_list)
         smb_cache.set('smb_status', smb_connection_status)
     
     return render_template('image_viewer.html',
@@ -199,7 +199,7 @@ def get_image(image_path):
         if image_data:
             return send_file(
                 image_data,
-                mimetype='image/png',
+                mimetype='image/jpeg',
                 as_attachment=False,
                 download_name=os.path.basename(image_path)
             )
@@ -214,10 +214,10 @@ def refresh_images():
     """Refresh the image list from SMB"""
     try:
         smb_retriever = SMBDataRetriever(app.config)
-        image_list = smb_retriever.scan_for_png_images()
+        image_list = smb_retriever.scan_for_jpg_images()
         
         # Update cache
-        smb_cache.set('png_image_list', image_list)
+        smb_cache.set('jpg_image_list', image_list)
         smb_cache.set('smb_status', {
             'connected': True,
             'images_found': len(image_list),
@@ -293,7 +293,7 @@ def health():
             smb_retriever = SMBDataRetriever(app.config)
             connected = smb_retriever.connect()
             if connected:
-                images = smb_retriever.scan_for_png_images()
+                images = smb_retriever.scan_for_jpg_images()
                 images_found = len(images)
             else:
                 images_found = 0

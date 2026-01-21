@@ -1,6 +1,6 @@
 # Visor de Imágenes SMB
 
-Sistema web para visualización de imágenes PNG almacenadas en carpetas SMB (Server Message Block).
+Sistema web para visualización de imágenes JPG almacenadas en carpetas SMB (Server Message Block).
 
 ## 🆕 Características Principales
 
@@ -12,7 +12,7 @@ Sistema web para visualización de imágenes PNG almacenadas en carpetas SMB (Se
 - Usuario por defecto: `admin` / `admin` (debe cambiarse en producción)
 
 ### 🖼️ Visor de Imágenes
-- Exploración automática de carpetas SMB en busca de archivos PNG
+- Exploración automática de carpetas SMB en busca de archivos JPG
 - Visualización de lista completa de imágenes encontradas
 - Búsqueda y filtrado por nombre de archivo, máquina o core
 - Vista previa de imágenes sin salir de la página
@@ -41,14 +41,14 @@ Sistema web para visualización de imágenes PNG almacenadas en carpetas SMB (Se
 Visor de Imágenes SMB es una aplicación web desarrollada en Python con Flask que permite:
 
 - **Autenticación segura**: Sistema de login con control de acceso
-- **Exploración de imágenes**: Búsqueda automática de archivos PNG en servidor SMB
+- **Exploración de imágenes**: Búsqueda automática de archivos JPG en servidor SMB
 - **Visualización**: Ver imágenes directamente en el navegador
 - **Búsqueda**: Filtrar imágenes por diferentes criterios
 - **Gestión de usuarios**: Crear y administrar usuarios del sistema (solo administradores)
 
 ## Objetivo General
 
-Proporcionar una plataforma centralizada y fácil de usar para visualizar imágenes PNG almacenadas en un servidor SMB, con navegación intuitiva y búsqueda eficiente.
+Proporcionar una plataforma centralizada y fácil de usar para visualizar imágenes JPG almacenadas en un servidor SMB, con navegación intuitiva y búsqueda eficiente.
 
 ## Requisitos
 
@@ -100,7 +100,7 @@ SMB_DOMAIN=WORKGROUP
 
 # Ruta base para escaneo (opcional, por defecto '/')
 # Para escanear solo dentro de una carpeta específica:
-# .png files should be two folders deep after pond/incoming/Orexplore/
+# .jpg files should be two folders deep after pond/incoming/Orexplore/
 SMB_BASE_SCAN_PATH=/incoming/Orexplore
 ```
 
@@ -130,7 +130,7 @@ La aplicación estará disponible en: `http://localhost:5000`
 ### Visualizar imágenes
 
 1. Después del login, serás redirigido automáticamente al visor de imágenes
-2. La lista de imágenes PNG se carga automáticamente desde el servidor SMB
+2. La lista de imágenes JPG se carga automáticamente desde el servidor SMB
 3. Usar la barra de búsqueda para filtrar imágenes
 4. Hacer clic en cualquier imagen de la lista para visualizarla
 5. Usar el scroll para navegar por más imágenes mientras se visualiza una
@@ -217,25 +217,25 @@ Para habilitar la integración con servidor SMB:
    - `SMB_BASE_SCAN_PATH=/incoming/Orexplore` - Escanea solo dentro de la carpeta incoming/Orexplore
    - `SMB_BASE_SCAN_PATH=/data/production` - Escanea solo dentro de data/production
 
-5. El sistema escanea recursivamente toda la estructura de carpetas en busca de archivos PNG. Soporta cualquier profundidad y organización de directorios:
+5. El sistema escanea recursivamente toda la estructura de carpetas en busca de archivos JPG. Soporta cualquier profundidad y organización de directorios:
    ```
    /share_name/
    ├── Orexplore/
    │   ├── Oux-Plore_Test/
    │   │   ├── Batch-1/
-   │   │   │   ├── image1.png
-   │   │   │   └── image2.png
+   │   │   │   ├── image1.jpg
+   │   │   │   └── image2.jpg
    │   │   └── Batch-2/
-   │   │       └── scan.png
+   │   │       └── scan.jpg
    │   └── SampleA/
    │       └── batch-1/
-   │           └── test.png
+   │           └── test.jpg
    └── MACHINE-02/
        └── CORE-003/
-           └── image4.png
+           └── image4.jpg
    ```
    
-   El escáner recursivo encuentra automáticamente todos los archivos PNG sin importar la estructura de carpetas.
+   El escáner recursivo encuentra automáticamente todos los archivos JPG sin importar la estructura de carpetas.
 
 ## Desarrollo
 

@@ -1,7 +1,7 @@
 # SMB Folder Scanning - Technical Documentation
 
 ## Overview
-This document explains how the application scans folders on the SMB server to ensure all PNG images are discovered.
+This document explains how the application scans folders on the SMB server to ensure all JPG images are discovered.
 
 ## Scanning Mechanism
 
@@ -17,12 +17,12 @@ SMB_BASE_SCAN_PATH=/incoming/Orexplore
 ```
 
 ### 2. Recursive Scanning Algorithm
-The `scan_for_png_images()` function in `smb_utils.py` performs a depth-first recursive scan:
+The `scan_for_jpg_images()` function in `smb_utils.py` performs a depth-first recursive scan:
 
 1. **Starts** at the configured base path (default: `/`)
 2. **Lists** all items in the current directory
 3. **For each directory found**: Recursively scans that directory
-4. **For each PNG file found**: Adds it to the results with full metadata
+4. **For each JPG file found**: Adds it to the results with full metadata
 5. **Continues** until all directories have been explored
 
 ### 3. Path Normalization
@@ -68,7 +68,7 @@ To verify all folders are being scanned:
 2. **Verify base path**: Ensure `SMB_BASE_SCAN_PATH` points to the correct folder
 3. **Check permissions**: User must have read access to all folders
 4. **Review logs**: Look for warning/error messages about specific paths
-5. **Validate file extensions**: Only `.png` files (case-insensitive) are detected
+5. **Validate file extensions**: Only `.jpg` files (case-insensitive) are detected
 
 ### Common Configuration Issues:
 - ❌ **Wrong share name**: `SMB_SHARE_NAME` must match the actual SMB share
@@ -86,11 +86,11 @@ To verify all folders are being scanned:
 │       ├── Machine-01/
 │       │   └── batch-1.0/
 │       │       └── sample-1/
-│       │           └── image.png  ← Found
+│       │           └── image.jpg  ← Found
 │       └── Machine-02/
-│           └── test.png           ← Found
+│           └── test.jpg           ← Found
 └── archive/
-    └── old_image.png              ← Found
+    └── old_image.jpg              ← Found
 ```
 Configuration: `SMB_BASE_SCAN_PATH=/`
 
@@ -100,11 +100,11 @@ Configuration: `SMB_BASE_SCAN_PATH=/`
 ├── incoming/
 │   └── Orexplore/
 │       ├── Machine-01/
-│       │   └── image.png         ← Found
+│       │   └── image.jpg         ← Found
 │       └── Machine-02/
-│           └── test.png          ← Found
+│           └── test.jpg          ← Found
 └── archive/
-    └── old_image.png             ← NOT scanned
+    └── old_image.jpg             ← NOT scanned
 ```
 Configuration: `SMB_BASE_SCAN_PATH=/incoming/Orexplore`
 

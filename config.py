@@ -30,7 +30,7 @@ class Config:
     
     # Base path for scanning (within the SMB share)
     # Set to '/' to scan from root, or specify a subfolder like 'incoming/Orexplore'
-    # .png files should be two folders deep after pond/incoming/Orexplore/
+    # .jpg files should be two folders deep after pond/incoming/Orexplore/
     SMB_BASE_SCAN_PATH = os.environ.get('SMB_BASE_SCAN_PATH', '/incoming/Orexplore')
     
     # Configuración de la aplicación

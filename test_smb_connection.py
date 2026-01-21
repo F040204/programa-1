@@ -12,7 +12,7 @@ Features:
     - Tests SMB server connectivity
     - Verifies credentials and authentication
     - Lists folders in the configured base path
-    - Scans for PNG files in the structure
+    - Scans for JPG files in the structure
     - Provides detailed error messages for troubleshooting
 """
 
@@ -194,29 +194,29 @@ def test_smb_connection():
         smb_retriever.disconnect()
         return False
     
-    # Test 4: Scan for PNG Images
-    print_section("Test 4: Scan for PNG Images")
-    png_files = []
+    # Test 4: Scan for JPG Images
+    print_section("Test 4: Scan for JPG Images")
+    jpg_files = []
     try:
-        # Disconnect first as scan_for_png_images handles its own connection
+        # Disconnect first as scan_for_jpg_images handles its own connection
         if smb_retriever.connection:
             smb_retriever.disconnect()
         
-        print_info("Starting recursive PNG scan...")
+        print_info("Starting recursive JPG scan...")
         print_info("This may take a few moments depending on folder structure...")
         
-        png_files = smb_retriever.scan_for_png_images()
+        jpg_files = smb_retriever.scan_for_jpg_images()
         
-        if png_files:
-            print_success(f"Found {len(png_files)} PNG files")
+        if jpg_files:
+            print_success(f"Found {len(jpg_files)} JPG files")
             
             # Calculate depth information relative to base path
             base_path = Config.SMB_BASE_SCAN_PATH or '/'
             max_depth = 0
             depth_counts = {}
             
-            for png in png_files:
-                path_parts = png.get('path_parts', [])
+            for jpg in jpg_files:
+                path_parts = jpg.get('path_parts', [])
                 # Calculate depth from the base path
                 depth = len(path_parts) - 1  # -1 because filename is the last part
                 max_depth = max(max_depth, depth)
@@ -233,13 +233,13 @@ def test_smb_connection():
             elif max_depth > 0:
                 print_info(f"Note: Currently only found files up to depth {max_depth}")
             
-            print_info("\nFirst 10 PNG files:")
-            for i, png in enumerate(png_files[:10]):
-                display_name = png.get('display_name', png.get('filename', 'Unknown'))
-                folder = png.get('folder_path', '')
-                path_parts = png.get('path_parts', [])
+            print_info("\nFirst 10 JPG files:")
+            for i, jpg in enumerate(jpg_files[:10]):
+                display_name = jpg.get('display_name', jpg.get('filename', 'Unknown'))
+                folder = jpg.get('folder_path', '')
+                path_parts = jpg.get('path_parts', [])
                 depth = len(path_parts) - 1
-                size_kb = png.get('file_size', 0) / 1024
+                size_kb = jpg.get('file_size', 0) / 1024
                 print(f"    {i+1}. {display_name}")
                 print(f"       Path: {folder}")
                 print(f"       Depth: {depth} levels")
@@ -248,8 +248,8 @@ def test_smb_connection():
             # Show summary statistics
             print_info("\nSummary by machine/folder:")
             machines = {}
-            for png in png_files:
-                machine = png.get('machine_id', 'Unknown')
+            for jpg in jpg_files:
+                machine = jpg.get('machine_id', 'Unknown')
                 if machine not in machines:
                     machines[machine] = 0
                 machines[machine] += 1
@@ -257,20 +257,20 @@ def test_smb_connection():
             for machine, count in sorted(machines.items()):
                 print(f"    {machine}: {count} images")
         else:
-            print_info("No PNG files found in the configured path")
+            print_info("No JPG files found in the configured path")
             print_info("Please verify:")
-            print_info(f"  - PNG files exist in {Config.SMB_BASE_SCAN_PATH}")
+            print_info(f"  - JPG files exist in {Config.SMB_BASE_SCAN_PATH}")
             print_info("  - Path is configured correctly")
             
     except Exception as e:
-        print_error(f"Failed to scan for PNG images: {str(e)}")
+        print_error(f"Failed to scan for JPG images: {str(e)}")
         return False
     
     # Test 5: Test Image Retrieval (if images found)
-    if png_files:
+    if jpg_files:
         print_section("Test 5: Test Image File Retrieval")
         try:
-            test_image = png_files[0]
+            test_image = jpg_files[0]
             print_info(f"Testing retrieval of: {test_image['filename']}")
             
             image_data = smb_retriever.get_image_file(test_image['full_path'])
