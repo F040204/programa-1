@@ -63,6 +63,13 @@ def get_smb_config():
     }
 
 
+def join_smb_path(base_path, filename):
+    """Helper function to join SMB paths consistently"""
+    if base_path.endswith('/'):
+        return f"{base_path}{filename}"
+    return f"{base_path}/{filename}"
+
+
 def test_smb_connection():
     """Main test function for SMB connection and folder access"""
     
@@ -132,12 +139,14 @@ def test_smb_connection():
             
             # Test accessing folders up to 3 levels deep
             print_info("\nVerifying folder access at multiple depths:")
+            MAX_DEPTH_CHECKS = 5  # Limit total checks to avoid long scan
+            MAX_SUBDIRS_PER_LEVEL = 2  # Check first 2 subdirectories at each level
             checked_depths = 0
             max_depth_to_check = 3
             
             def check_folder_depth(current_path, depth, max_depth, checked_count):
                 """Recursively check folder access up to specified depth"""
-                if depth > max_depth or checked_count >= 5:  # Limit to 5 total checks to avoid long scan
+                if depth > max_depth or checked_count >= MAX_DEPTH_CHECKS:
                     return checked_count
                 
                 try:
@@ -148,10 +157,10 @@ def test_smb_connection():
                     subdirs = [item for item in items if item.isDirectory and item.filename not in ['.', '..']]
                     
                     if subdirs:
-                        for subdir in subdirs[:2]:  # Check first 2 subdirectories at each level
-                            if checked_count >= 5:
+                        for subdir in subdirs[:MAX_SUBDIRS_PER_LEVEL]:
+                            if checked_count >= MAX_DEPTH_CHECKS:
                                 break
-                            subdir_path = f"{current_path}/{subdir.filename}" if not current_path.endswith('/') else f"{current_path}{subdir.filename}"
+                            subdir_path = join_smb_path(current_path, subdir.filename)
                             print(f"    ✓ Depth {depth}: {subdir_path}")
                             checked_count += 1
                             checked_count = check_folder_depth(subdir_path, depth + 1, max_depth, checked_count)
@@ -162,7 +171,7 @@ def test_smb_connection():
             
             # Start checking from first folder
             if folders:
-                first_folder_path = f"{base_path}/{folders[0].filename}" if not base_path.endswith('/') else f"{base_path}{folders[0].filename}"
+                first_folder_path = join_smb_path(base_path, folders[0].filename)
                 checked_depths = check_folder_depth(first_folder_path, 1, max_depth_to_check, 0)
                 
                 if checked_depths > 0:
