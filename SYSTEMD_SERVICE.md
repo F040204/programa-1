@@ -59,14 +59,27 @@ sudo nano /opt/programa-1/.env
 - `SMB_PASSWORD` - SMB password
 - Other SMB configuration as needed
 
-### 6. Create Log Directory
+### 6. Initialize the Database
+
+**Important:** Initialize the database before starting the service for the first time:
+
+```bash
+cd /opt/programa-1
+source venv/bin/activate
+python -c "from app import init_db; init_db()"
+deactivate
+```
+
+This creates the database and default admin user.
+
+### 7. Create Log Directory
 
 ```bash
 sudo mkdir -p /var/log/programa-1
 sudo chown www-data:www-data /var/log/programa-1
 ```
 
-### 7. Set Proper Permissions
+### 8. Set Proper Permissions
 
 ```bash
 sudo chown -R www-data:www-data /opt/programa-1
@@ -74,14 +87,14 @@ sudo chmod 640 /opt/programa-1/.env
 sudo chmod 755 /opt/programa-1
 ```
 
-### 8. Install the Systemd Service
+### 9. Install the Systemd Service
 
 ```bash
 sudo cp /opt/programa-1/programa-1.service /etc/systemd/system/
 sudo systemctl daemon-reload
 ```
 
-### 9. Enable and Start the Service
+### 10. Enable and Start the Service
 
 ```bash
 # Enable service to start on boot
@@ -148,17 +161,23 @@ If you want to install the application in a different directory:
 2. Update all occurrences of `/opt/programa-1` to your desired path
 3. Follow the installation steps using your custom path
 
-### Changing the Port
+### Changing the Port or Network Binding
 
-To change the port from 5000 to another port:
+By default, the service binds to `127.0.0.1:5000` (localhost only) for security, expecting a reverse proxy.
+
+To change the port or expose to other interfaces:
 
 1. Edit `/etc/systemd/system/programa-1.service`
-2. In the `ExecStart` line, change `--bind 0.0.0.0:5000` to your desired port
+2. In the `ExecStart` line, change `--bind 127.0.0.1:5000` to your desired configuration:
+   - `--bind 127.0.0.1:8000` - Different port, localhost only (recommended)
+   - `--bind 0.0.0.0:5000` - All interfaces (only if not using reverse proxy)
 3. Reload and restart:
    ```bash
    sudo systemctl daemon-reload
    sudo systemctl restart programa-1
    ```
+
+**Security Note:** Binding to `0.0.0.0` exposes the application to all network interfaces. Use a reverse proxy (Nginx/Apache) for production deployments.
 
 ### Changing the Number of Workers
 
@@ -191,9 +210,9 @@ By default, the service runs as `www-data`. To use a different user:
    ```
 5. Reload and restart
 
-## Reverse Proxy Configuration (Optional)
+## Reverse Proxy Configuration (Recommended)
 
-For production, it's recommended to use a reverse proxy like Nginx or Apache.
+**Important:** The service is configured to bind to `127.0.0.1:5000` (localhost only) by default. For production deployments, you should use a reverse proxy like Nginx or Apache to handle external connections.
 
 ### Nginx Example
 
