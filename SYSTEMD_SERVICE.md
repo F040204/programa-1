@@ -265,8 +265,10 @@ sudo systemctl reload nginx
    ```bash
    cd /opt/programa-1
    source venv/bin/activate
-   gunicorn --bind 0.0.0.0:5000 app:app
+   PYTHONPATH=/opt/programa-1 gunicorn --bind 0.0.0.0:5000 app:app
    ```
+
+4. If you see `ModuleNotFoundError: No module named 'app'`, ensure the systemd service has `Environment="PYTHONPATH=/opt/programa-1"` set in the `[Service]` section.
 
 ### Permission Denied Errors
 
