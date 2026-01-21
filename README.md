@@ -78,23 +78,30 @@ pip install -r requirements.txt
 ```
 
 4. Configurar variables de entorno:
-Crear archivo `.env` en la raíz del proyecto:
+Crear archivo `.env` en la raíz del proyecto basado en `.env.example`:
+```bash
+cp .env.example .env
+```
+
+**IMPORTANTE:** Para uso en producción, cambie las credenciales por defecto. Nunca use las credenciales de ejemplo en un entorno de producción.
+
+O crear manualmente con el siguiente contenido:
 ```env
 SECRET_KEY=tu-clave-secreta-aqui
 DATABASE_URL=sqlite:///images.db
 
 # Configuración SMB (requerido)
 SMB_SERVER_NAME=servidor-smb
-SMB_SERVER_IP=192.168.1.100
-SMB_SHARE_NAME=shared_folder
-SMB_USERNAME=usuario
-SMB_PASSWORD=contraseña
+SMB_SERVER_IP=172.16.11.107
+SMB_SHARE_NAME=pond
+SMB_USERNAME=orexplore
+SMB_PASSWORD=en6Eith0aphi
 SMB_DOMAIN=WORKGROUP
 
 # Ruta base para escaneo (opcional, por defecto '/')
 # Para escanear solo dentro de una carpeta específica:
-# SMB_BASE_SCAN_PATH=incoming/Orexplore
-SMB_BASE_SCAN_PATH=/
+# .png files should be two folders deep after pond/incoming/Orexplore/
+SMB_BASE_SCAN_PATH=/incoming/Orexplore
 ```
 
 5. Inicializar la base de datos:

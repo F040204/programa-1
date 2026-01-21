@@ -18,16 +18,20 @@ class Config:
     LOCKOUT_DURATION = 300  # 5 minutos en segundos
     
     # Configuración SMB Server
+    # IMPORTANT: Default values below are for development/example purposes.
+    # For production, always set these via environment variables in .env file.
+    # Never commit actual production credentials to version control.
     SMB_SERVER_NAME = os.environ.get('SMB_SERVER_NAME', 'servidor-smb')
-    SMB_SERVER_IP = os.environ.get('SMB_SERVER_IP', '192.168.1.100')
-    SMB_SHARE_NAME = os.environ.get('SMB_SHARE_NAME', 'orexplore_data')
-    SMB_USERNAME = os.environ.get('SMB_USERNAME', '')
-    SMB_PASSWORD = os.environ.get('SMB_PASSWORD', '')
+    SMB_SERVER_IP = os.environ.get('SMB_SERVER_IP', '172.16.11.107')
+    SMB_SHARE_NAME = os.environ.get('SMB_SHARE_NAME', 'pond')
+    SMB_USERNAME = os.environ.get('SMB_USERNAME', 'orexplore')
+    SMB_PASSWORD = os.environ.get('SMB_PASSWORD', 'en6Eith0aphi')
     SMB_DOMAIN = os.environ.get('SMB_DOMAIN', 'WORKGROUP')
     
     # Base path for scanning (within the SMB share)
     # Set to '/' to scan from root, or specify a subfolder like 'incoming/Orexplore'
-    SMB_BASE_SCAN_PATH = os.environ.get('SMB_BASE_SCAN_PATH', '/')
+    # .png files should be two folders deep after pond/incoming/Orexplore/
+    SMB_BASE_SCAN_PATH = os.environ.get('SMB_BASE_SCAN_PATH', '/incoming/Orexplore')
     
     # Configuración de la aplicación
     OPERATIONS_PER_PAGE = 20
