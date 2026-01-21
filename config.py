@@ -29,9 +29,6 @@ class Config:
     # Set to '/' to scan from root, or specify a subfolder like 'incoming/Orexplore'
     SMB_BASE_SCAN_PATH = os.environ.get('SMB_BASE_SCAN_PATH', '/')
     
-    # Configuration keys (used by other modules)
-    CONFIG_KEY_BASE_SCAN_PATH = 'SMB_BASE_SCAN_PATH'
-    
     # Configuración de la aplicación
     OPERATIONS_PER_PAGE = 20
     BATCHES_PER_PAGE = 30
