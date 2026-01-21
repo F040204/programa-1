@@ -135,9 +135,26 @@
     font-weight: bold;
     color: #666;
 }
+
+/* Zoom controls - use more specific selector to avoid !important */
+div[id="zoom-controls"] {
+    display: inline-flex;
+}
+
+div[id="zoom-controls"][style*="display: none"] {
+    display: none;
+}
 </style>
 
 <script>
+// Zoom functionality variables (declare at the top)
+let currentZoom = 1;
+const zoomStep = 0.25;
+const minZoom = 0.25;
+const maxZoom = 4;
+const DEFAULT_ZOOM = 1;
+const TOGGLE_ZOOM = 2;
+
 function toggleHoleSection(holeName) {
     const container = document.getElementById('hole-images-' + holeName);
     const icon = document.getElementById('toggle-icon-' + holeName);
@@ -151,6 +168,18 @@ function toggleHoleSection(holeName) {
     }
 }
 
+function onImageLoad() {
+    document.getElementById('loading-indicator').style.display = 'none';
+    document.getElementById('preview-image').style.display = 'block';
+    document.getElementById('zoom-controls').style.display = 'inline-flex';
+    document.getElementById('image-container').style.display = 'block';
+}
+
+function onImageError() {
+    document.getElementById('preview-image').style.display = 'none';
+    document.getElementById('loading-indicator').innerHTML = '<div style="color: red; padding: 20px;"><strong>Error:</strong> No se pudo cargar la imagen. Verifique la conexión SMB.</div>';
+}
+
 function showImage(event, fullPath, filename, machineId, coreId, folderPath, holeName, batch, sample) {
     // Remove previous selection
     document.querySelectorAll('.image-item').forEach(item => {
@@ -159,6 +188,9 @@ function showImage(event, fullPath, filename, machineId, coreId, folderPath, hol
     
     // Mark current selection
     event.currentTarget.classList.add('selected');
+    
+    // Reset zoom when changing images
+    currentZoom = DEFAULT_ZOOM;
     
     // Encode the path properly for URL
     const encodedPath = encodeURIComponent(fullPath);
@@ -190,15 +222,30 @@ function showImage(event, fullPath, filename, machineId, coreId, folderPath, hol
             </div>
         </div>
         <div style="text-align: center;">
+            <div id="zoom-controls" style="display: none; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; gap: 10px; align-items: center;">
+                <button onclick="zoomIn()" class="btn btn-sm btn-secondary" title="Zoom In">
+                    <span style="font-size: 1.2em;">🔍+</span>
+                </button>
+                <button onclick="zoomOut()" class="btn btn-sm btn-secondary" title="Zoom Out">
+                    <span style="font-size: 1.2em;">🔍-</span>
+                </button>
+                <button onclick="resetZoom()" class="btn btn-sm btn-secondary" title="Reset Zoom">
+                    <span style="font-size: 1.2em;">↺</span>
+                </button>
+                <span id="zoom-level" style="font-size: 0.9em; color: #666; min-width: 60px;">100%</span>
+            </div>
             <div id="loading-indicator" style="padding: 40px; color: #666;">
                 <div style="font-size: 48px;">⏳</div>
                 <div>Cargando imagen...</div>
             </div>
-            <img id="preview-image" src="{{ url_for('get_image', image_path='') }}${fullPath}" 
-                 alt="${filename}"
-                 style="display: none;"
-                 onload="document.getElementById('loading-indicator').style.display='none'; this.style.display='block';"
-                 onerror="this.style.display='none'; document.getElementById('loading-indicator').innerHTML='<div style=\\'color: red; padding: 20px;\\'><strong>Error:</strong> No se pudo cargar la imagen. Verifique la conexión SMB.</div>';">
+            <div id="image-container" style="overflow: auto; max-height: 70vh; border: 1px solid #ddd; border-radius: 8px; display: none;">
+                <img id="preview-image" src="{{ url_for('get_image', image_path='') }}${fullPath}" 
+                     alt="${filename}"
+                     style="display: none; transition: transform 0.3s ease; cursor: zoom-in;"
+                     onclick="toggleImageZoom()"
+                     onload="onImageLoad()"
+                     onerror="onImageError()">
+            </div>
         </div>
     `;
 }
@@ -274,6 +321,60 @@ function refreshImages(event) {
         button.disabled = false;
         button.textContent = 'Actualizar Lista';
     });
+}
+
+// Zoom functionality functions
+function zoomIn() {
+    if (currentZoom < maxZoom) {
+        currentZoom += zoomStep;
+        applyZoom();
+    }
+}
+
+function zoomOut() {
+    if (currentZoom > minZoom) {
+        currentZoom -= zoomStep;
+        applyZoom();
+    }
+}
+
+function resetZoom() {
+    currentZoom = DEFAULT_ZOOM;
+    applyZoom();
+}
+
+function applyZoom() {
+    const img = document.getElementById('preview-image');
+    const zoomLevel = document.getElementById('zoom-level');
+    
+    if (img) {
+        img.style.transform = `scale(${currentZoom})`;
+        img.style.transformOrigin = 'center';
+        
+        // Update cursor based on zoom level
+        if (currentZoom === DEFAULT_ZOOM) {
+            img.style.cursor = 'zoom-in';
+        } else {
+            img.style.cursor = 'zoom-out';
+        }
+    }
+    
+    if (zoomLevel) {
+        zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+    }
+}
+
+// Click on image to toggle zoom
+function toggleImageZoom() {
+    const img = document.getElementById('preview-image');
+    if (img) {
+        if (currentZoom === DEFAULT_ZOOM) {
+            currentZoom = TOGGLE_ZOOM;
+        } else {
+            currentZoom = DEFAULT_ZOOM;
+        }
+        applyZoom();
+    }
 }
 </script>
 
