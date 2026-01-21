@@ -50,6 +50,19 @@ def print_info(text):
     print(f"ℹ {text}")
 
 
+def get_smb_config():
+    """Get SMB configuration dictionary"""
+    return {
+        'SMB_SERVER_NAME': Config.SMB_SERVER_NAME,
+        'SMB_SERVER_IP': Config.SMB_SERVER_IP,
+        'SMB_SHARE_NAME': Config.SMB_SHARE_NAME,
+        'SMB_USERNAME': Config.SMB_USERNAME,
+        'SMB_PASSWORD': Config.SMB_PASSWORD,
+        'SMB_DOMAIN': Config.SMB_DOMAIN,
+        'SMB_BASE_SCAN_PATH': Config.SMB_BASE_SCAN_PATH
+    }
+
+
 def test_smb_connection():
     """Main test function for SMB connection and folder access"""
     
@@ -58,31 +71,16 @@ def test_smb_connection():
     
     # Display configuration
     print_section("Configuration")
-    config_dict = {
-        'SMB_SERVER_NAME': Config.SMB_SERVER_NAME,
-        'SMB_SERVER_IP': Config.SMB_SERVER_IP,
-        'SMB_SHARE_NAME': Config.SMB_SHARE_NAME,
-        'SMB_USERNAME': Config.SMB_USERNAME,
-        'SMB_PASSWORD': '***' if Config.SMB_PASSWORD else 'Not set',
-        'SMB_DOMAIN': Config.SMB_DOMAIN,
-        'SMB_BASE_SCAN_PATH': Config.SMB_BASE_SCAN_PATH
-    }
+    config = get_smb_config()
+    config_display = config.copy()
+    config_display['SMB_PASSWORD'] = '***' if config['SMB_PASSWORD'] else 'Not set'
     
-    for key, value in config_dict.items():
+    for key, value in config_display.items():
         print(f"  {key}: {value}")
     
     # Test 1: Initialize SMB Retriever
     print_section("Test 1: Initialize SMB Data Retriever")
     try:
-        config = {
-            'SMB_SERVER_NAME': Config.SMB_SERVER_NAME,
-            'SMB_SERVER_IP': Config.SMB_SERVER_IP,
-            'SMB_SHARE_NAME': Config.SMB_SHARE_NAME,
-            'SMB_USERNAME': Config.SMB_USERNAME,
-            'SMB_PASSWORD': Config.SMB_PASSWORD,
-            'SMB_DOMAIN': Config.SMB_DOMAIN,
-            'SMB_BASE_SCAN_PATH': Config.SMB_BASE_SCAN_PATH
-        }
         smb_retriever = SMBDataRetriever(config)
         print_success("SMB Data Retriever initialized successfully")
     except Exception as e:
@@ -149,9 +147,11 @@ def test_smb_connection():
     
     # Test 4: Scan for PNG Images
     print_section("Test 4: Scan for PNG Images")
+    png_files = []
     try:
         # Disconnect first as scan_for_png_images handles its own connection
-        smb_retriever.disconnect()
+        if smb_retriever.connection:
+            smb_retriever.disconnect()
         
         print_info("Starting recursive PNG scan...")
         print_info("This may take a few moments depending on folder structure...")
