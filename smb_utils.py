@@ -4,6 +4,10 @@ import tempfile
 import os
 import io
 import re
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 class SMBDataRetriever:
@@ -184,16 +188,32 @@ class SMBDataRetriever:
         
         try:
             if not self.connect():
+                logger.error("Failed to connect to SMB server")
                 return png_files
             
-            # Escanear recursivamente desde la raíz
-            png_files = self._scan_directory_recursive('/', png_files)
+            # Get base scan path from configuration
+            base_path = self.config.get('SMB_BASE_SCAN_PATH', '/')
+            
+            # Normalize base path - ensure it starts with / and doesn't end with / (unless root)
+            if not base_path.startswith('/'):
+                base_path = '/' + base_path
+            if base_path != '/' and base_path.endswith('/'):
+                base_path = base_path[:-1]
+            
+            logger.info(f"Starting recursive PNG scan from base path: {base_path}")
+            
+            # Escanear recursivamente desde la ruta base configurada
+            png_files = self._scan_directory_recursive(base_path, png_files)
+            
+            logger.info(f"Scan complete. Found {len(png_files)} PNG files")
             
             # Filtrar solo imágenes que están en batch-xxx.xx/sample-N
             filtered_files = self._filter_batch_sample_images(png_files)
+            
+            logger.info(f"After filtering: {len(filtered_files)} PNG files")
         
         except Exception as e:
-            print(f"Error escaneando servidor SMB para PNG: {str(e)}")
+            logger.error(f"Error scanning SMB server for PNG: {str(e)}")
             filtered_files = []
         finally:
             self.disconnect()
@@ -212,11 +232,16 @@ class SMBDataRetriever:
             Lista actualizada de archivos PNG
         """
         try:
+            logger.debug(f"Scanning directory: {path}")
+            
             # Listar contenido del directorio
             items = self.connection.listPath(
                 self.config['SMB_SHARE_NAME'],
                 path
             )
+            
+            dir_count = 0
+            file_count = 0
             
             for item in items:
                 # Saltar referencias de directorio actual y padre
@@ -230,9 +255,11 @@ class SMBDataRetriever:
                     item_path = f"{path}/{item.filename}"
                 
                 if item.isDirectory:
+                    dir_count += 1
                     # Si es un directorio, escanear recursivamente
                     png_files = self._scan_directory_recursive(item_path, png_files)
                 elif item.filename.lower().endswith('.png'):
+                    file_count += 1
                     # Si es un archivo PNG, agregarlo a la lista
                     # Extraer información de la ruta para organización
                     path_parts = item_path.strip('/').split('/')
@@ -256,9 +283,12 @@ class SMBDataRetriever:
                         png_info['core_id'] = ''
                     
                     png_files.append(png_info)
+            
+            if dir_count > 0 or file_count > 0:
+                logger.debug(f"  {path}: found {dir_count} subdirectories, {file_count} PNG files")
         
         except Exception as e:
-            print(f"Error escaneando directorio {path}: {str(e)}")
+            logger.warning(f"Error scanning directory {path}: {str(e)}")
         
         return png_files
     
