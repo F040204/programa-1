@@ -83,6 +83,8 @@ Crear archivo `.env` en la raíz del proyecto basado en `.env.example`:
 cp .env.example .env
 ```
 
+**IMPORTANTE:** Para uso en producción, cambie las credenciales por defecto. Nunca use las credenciales de ejemplo en un entorno de producción.
+
 O crear manualmente con el siguiente contenido:
 ```env
 SECRET_KEY=tu-clave-secreta-aqui

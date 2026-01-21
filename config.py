@@ -18,6 +18,9 @@ class Config:
     LOCKOUT_DURATION = 300  # 5 minutos en segundos
     
     # Configuración SMB Server
+    # IMPORTANT: Default values below are for development/example purposes.
+    # For production, always set these via environment variables in .env file.
+    # Never commit actual production credentials to version control.
     SMB_SERVER_NAME = os.environ.get('SMB_SERVER_NAME', 'servidor-smb')
     SMB_SERVER_IP = os.environ.get('SMB_SERVER_IP', '172.16.11.107')
     SMB_SHARE_NAME = os.environ.get('SMB_SHARE_NAME', 'pond')
